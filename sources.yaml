@@ -1,0 +1,104 @@
+{
+  "feeds": [
+    {
+      "id": "anthropic_news",
+      "name": "Anthropic news",
+      "type": "article",
+      "url": "https://www.anthropic.com/news/rss.xml",
+      "page_url": "https://www.anthropic.com/news",
+      "alternates": [
+        "https://www.anthropic.com/rss.xml"
+      ]
+    },
+    {
+      "id": "anthropic_engineering",
+      "name": "Anthropic engineering",
+      "type": "article",
+      "url": "https://www.anthropic.com/engineering/rss.xml",
+      "page_url": "https://www.anthropic.com/engineering",
+      "alternates": [
+        "https://www.anthropic.com/news/rss.xml"
+      ]
+    },
+    {
+      "id": "openai_news",
+      "name": "OpenAI news",
+      "type": "article",
+      "url": "https://openai.com/news/rss.xml",
+      "alternates": [
+        "https://openai.com/blog/rss.xml"
+      ]
+    },
+    {
+      "id": "cursor_blog",
+      "name": "Cursor blog",
+      "type": "article",
+      "url": "https://cursor.com/blog/rss.xml",
+      "page_url": "https://cursor.com/blog",
+      "alternates": [
+        "https://www.cursor.com/blog/rss.xml"
+      ]
+    },
+    {
+      "id": "ramp_engineering",
+      "name": "Ramp engineering",
+      "type": "article",
+      "url": "https://ramp.com/engineering/rss.xml",
+      "page_url": "https://ramp.com/blog",
+      "alternates": [
+        "https://ramp.com/blog/engineering/rss.xml"
+      ]
+    }
+  ],
+  "arxiv": {
+    "id": "arxiv_agents",
+    "name": "arXiv cs.CL/cs.AI agents",
+    "type": "paper",
+    "url": "https://export.arxiv.org/api/query",
+    "query": "(cat:cs.CL OR cat:cs.AI) AND all:agent",
+    "days": 7,
+    "max_results": 10
+  },
+  "repos": [
+    {
+      "id": "openai_codex",
+      "name": "openai/codex",
+      "type": "repo_release",
+      "owner": "openai",
+      "repo": "codex",
+      "url": "https://api.github.com/repos/openai/codex/releases"
+    },
+    {
+      "id": "anthropic_claude_code",
+      "name": "anthropics/claude-code",
+      "type": "repo_release",
+      "owner": "anthropics",
+      "repo": "claude-code",
+      "url": "https://api.github.com/repos/anthropics/claude-code/releases"
+    },
+    {
+      "id": "openai_agents_python",
+      "name": "openai/openai-agents-python",
+      "type": "repo_release",
+      "owner": "openai",
+      "repo": "openai-agents-python",
+      "url": "https://api.github.com/repos/openai/openai-agents-python/releases"
+    },
+    {
+      "id": "anthropic_claude_agent_sdk_python",
+      "name": "anthropics/claude-agent-sdk-python",
+      "type": "repo_release",
+      "owner": "anthropics",
+      "repo": "claude-agent-sdk-python",
+      "url": "https://api.github.com/repos/anthropics/claude-agent-sdk-python/releases"
+    },
+    {
+      "id": "e2b",
+      "name": "e2b-dev/E2B",
+      "type": "repo_release",
+      "owner": "e2b-dev",
+      "repo": "E2B",
+      "url": "https://api.github.com/repos/e2b-dev/E2B/releases"
+    }
+  ]
+}

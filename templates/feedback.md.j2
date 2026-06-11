@@ -1,0 +1,14 @@
+# DeepBrief feedback - {{ date }}
+
+{% for item in items %}
+## {{ item.id }} - {{ item.title }}
+
+rating: [ ] up  [ ] down
+note:
+
+{% endfor %}
+## What to change
+
+{% if experiment %}
+## A/B {{ experiment.id }}: prefer [ ] A  [ ] B  [ ] no preference - promote? [ ] yes  [ ] no
+{% endif %}

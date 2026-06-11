@@ -4,7 +4,12 @@ version = "0.1.0"
 description = "Automated daily AI/agents deep-brief pipeline."
 readme = "README.md"
 requires-python = ">=3.12"
-dependencies = []
+dependencies = [
+    "claude-agent-sdk",
+]
+
+[tool.deepbrief]
+m0 = "scaffold"
 
 [project.scripts]
 deepbrief = "deepbrief.cli:main"

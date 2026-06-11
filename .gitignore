@@ -1,16 +1,17 @@
-.DS_Store
 .env
 .venv/
+.history/
+.cache/
 __pycache__/
-*.py[cod]
+*.pyc
+.mypy_cache/
 .pytest_cache/
 .ruff_cache/
-.mypy_cache/
-.history/
-.coverage
-dist/
+.DS_Store
+*.log
+*.db
+*.sqlite
+*.pdf
 build/
+dist/
 *.egg-info/
-
-# DeepBrief runtime state/artifacts belong outside this repository:
-# ~/DeepBrief/ and ~/.deepbrief/

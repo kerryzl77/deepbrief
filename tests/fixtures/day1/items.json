@@ -1,0 +1,50 @@
+[
+  {
+    "id": "soak_context_memory",
+    "url": "https://example.invalid/soak/context-memory",
+    "title": "Context memory for coding agents",
+    "type": "article",
+    "published_at": "2026-06-08T10:00:00Z",
+    "score": 91,
+    "score_reasons": "Grounded memory mechanism for agent continuity.",
+    "summary": "A local event log stores compact summaries so coding agents avoid repeating failed attempts and can preserve project context across runs.",
+    "concepts": [
+      {
+        "name": "Context memory",
+        "summary": "Persistent project context that records decisions, failed attempts, and compact state for future agent runs."
+      }
+    ]
+  },
+  {
+    "id": "soak_model_hype",
+    "url": "https://example.invalid/soak/model-hype",
+    "title": "Model announcement without implementation details",
+    "type": "article",
+    "published_at": "2026-06-08T11:00:00Z",
+    "score": 74,
+    "score_reasons": "Initially included to test negative feedback.",
+    "summary": "A thin announcement emphasizes broad benchmark claims but gives few concrete implementation details.",
+    "concepts": [
+      {
+        "name": "Hype filter",
+        "summary": "A ranking preference that penalizes announcement-only items without implementation evidence."
+      }
+    ]
+  },
+  {
+    "id": "soak_eval_harness",
+    "url": "https://example.invalid/soak/eval-harness",
+    "title": "Small replay harness for agent evals",
+    "type": "repo_release",
+    "published_at": "2026-06-08T12:00:00Z",
+    "score": 83,
+    "score_reasons": "Agent evaluation harness with reproducible replay fixtures.",
+    "summary": "A fixture-driven eval harness replays frozen inputs and scores agent outputs with deterministic checks before any live judge call.",
+    "concepts": [
+      {
+        "name": "Replay harness",
+        "summary": "Frozen inputs and expected outcomes used to compare active and candidate prompt behavior."
+      }
+    ]
+  }
+]

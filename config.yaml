@@ -1,0 +1,37 @@
+{
+  "repo_backend": "claude_agent_sdk",
+  "state_dir": "~/.deepbrief",
+  "artifacts_dir": "~/DeepBrief",
+  "repo_cache_dir": "~/.deepbrief/repos",
+  "sources_path": "sources.yaml",
+  "profile_path": "profile.md",
+  "preferences_path": "preferences.md",
+  "prompts_dir": "prompts",
+  "migrations_dir": "migrations",
+  "templates_dir": "templates",
+  "launchd_dir": "launchd",
+  "budgets": {
+    "run_usd": 5.0,
+    "tuner_usd": 2.5,
+    "stages": {
+      "rank": 0.75,
+      "signal_extract": 0.35,
+      "skim": 0.75,
+      "deepdive_article": 1.75,
+      "code_analyst": 1.75,
+      "tuner": 1.0,
+      "judge": 0.75,
+      "librarian": 0.45
+    }
+  },
+  "models": {
+    "fast": "claude-haiku-4-5-20251001",
+    "deep": "claude-sonnet-4-6"
+  },
+  "schedule": {
+    "hour": 6,
+    "minute": 15
+  },
+  "auto_promote": false,
+  "ab_live_variant": "skims_only"
+}

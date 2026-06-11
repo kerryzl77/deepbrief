@@ -1,0 +1,66 @@
+[
+  {
+    "id": "soak_context_memory",
+    "url": "https://example.invalid/soak/context-memory",
+    "title": "Context memory for coding agents",
+    "type": "article",
+    "published_at": "2026-06-08T10:00:00Z",
+    "score": 91,
+    "score_reasons": "Overlap item included to prove no repeats.",
+    "summary": "This overlap item should not appear in day 2 because it was covered on day 1.",
+    "concepts": [
+      {
+        "name": "Context memory",
+        "summary": "Persistent project context."
+      }
+    ]
+  },
+  {
+    "id": "soak_sandbox_governance",
+    "url": "https://example.invalid/soak/sandbox-governance",
+    "title": "Sandbox governance for unattended agents",
+    "type": "repo_release",
+    "published_at": "2026-06-09T10:00:00Z",
+    "score": 95,
+    "score_reasons": "New implementation-grounded item after day-1 feedback.",
+    "summary": "A policy layer denies mutating tools by default and records tool-use decisions for unattended agent runs.",
+    "concepts": [
+      {
+        "name": "Sandbox governance",
+        "summary": "Permission and audit controls that keep unattended agents inside read-only or explicitly approved boundaries."
+      }
+    ]
+  },
+  {
+    "id": "soak_prompt_diffing",
+    "url": "https://example.invalid/soak/prompt-diffing",
+    "title": "Prompt diffing and rollback mechanics",
+    "type": "article",
+    "published_at": "2026-06-09T12:00:00Z",
+    "score": 88,
+    "score_reasons": "Directly supports bounded prompt tuning and rollback.",
+    "summary": "A versioned prompt registry stores active and candidate prompts, bounds diff size, and supports rollback through parent pointers.",
+    "concepts": [
+      {
+        "name": "Prompt diffing",
+        "summary": "A bounded comparison between active and candidate prompt artifacts with immutable invariants."
+      }
+    ]
+  },
+  {
+    "id": "soak_agent_trace",
+    "url": "https://example.invalid/soak/agent-trace",
+    "title": "Agent trace table release",
+    "type": "repo_release",
+    "published_at": "2026-06-09T13:00:00Z",
+    "score": 80,
+    "score_reasons": "Supports file-by-file grounded walkthroughs.",
+    "summary": "A trace table maps agent actions to file paths, symbols, and state transitions.",
+    "concepts": [
+      {
+        "name": "Trace table",
+        "summary": "A grounded walkthrough format that ties claims to files, symbols, and line references."
+      }
+    ]
+  }
+]
