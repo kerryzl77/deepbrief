@@ -1,0 +1,20 @@
+[project]
+name = "deepbrief"
+version = "0.1.0"
+description = "Automated daily AI/agents deep-brief pipeline."
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = []
+
+[project.scripts]
+deepbrief = "deepbrief.cli:main"
+
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[tool.uv]
+package = true
+
+[tool.setuptools.packages.find]
+where = ["src"]
