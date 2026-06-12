@@ -1,0 +1,4 @@
+interface:
+  display_name: "DeepBrief Daily"
+  short_description: "Generate full Codex-native DeepBrief PDFs"
+  default_prompt: "Use $deepbrief-daily to research today's AI/agents landscape and produce a ready-to-read daily PDF."
