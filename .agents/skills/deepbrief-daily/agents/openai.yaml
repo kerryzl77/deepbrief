@@ -1,4 +1,4 @@
 interface:
   display_name: "DeepBrief Daily"
-  short_description: "Generate full Codex-native DeepBrief PDFs"
-  default_prompt: "Use $deepbrief-daily to research today's AI/agents landscape and produce a ready-to-read daily PDF."
+  short_description: "Generate high-recall Codex-native AI/agents PDFs"
+  default_prompt: "Use $deepbrief-daily for a long-running high-recall applied AI/agents brief. Explicitly spawn parallel subagents or wave-based workers for papers/evals, repos/releases, company engineering posts, model-training/inference notes, applied document AI, builder discourse, and verification. Screen at least 100 candidates, download at least 20 raw artifacts into the local artifact directory, write per-selected-source read reports and an evidence matrix, then render a ready-to-read PDF only after the research gates pass."

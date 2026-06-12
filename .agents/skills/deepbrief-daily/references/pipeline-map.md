@@ -51,3 +51,4 @@ Read this reference before modifying the DeepBrief engine or adapting the skill 
 2. Use deterministic local scripts only for reading files and rendering PDFs.
 3. Do not delegate production brief generation to the old engine CLI unless explicitly approved.
 4. Only extract portable assets or implement a true Codex backend after intentionally revising the engine spec.
+5. For Codex-native daily briefs, exceed the legacy quick path by enforcing high-recall scouting, local raw artifact manifests, explicit subagent or wave fan-out, per-source read reports, and claim-to-artifact evidence before rendering.

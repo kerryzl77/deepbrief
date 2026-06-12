@@ -12,6 +12,9 @@ from pathlib import Path
 from typing import Any
 
 
+RESEARCH_MIN_CANDIDATES = 100
+RESEARCH_MIN_RAW_ARTIFACTS = 20
+RESEARCH_MIN_READ_REPORTS = 5
 REQUIRED_HEADINGS = [
     "# Today's Deep Dive",
     "# Skim Cards",
@@ -37,6 +40,11 @@ def main() -> int:
     parser.add_argument("--input", required=True, help="Path to completed brief.md.")
     parser.add_argument("--out", required=True, help="Output artifact directory.")
     parser.add_argument("--template", help="Optional Typst template path.")
+    parser.add_argument(
+        "--allow-degraded-research",
+        action="store_true",
+        help="Render even when high-recall research artifact gates fail. Use only after explicit user approval.",
+    )
     args = parser.parse_args()
 
     source = Path(args.input).expanduser().resolve()
@@ -50,9 +58,23 @@ def main() -> int:
     diagrams_dir = out_dir / "diagrams"
 
     lint = lint_markdown(source)
+    research = check_research_artifacts(out_dir)
     tools = check_tools()
-    if lint["blocking_errors"] or tools["missing"]:
-        print(json.dumps({"status": "blocked", "lint": lint, "tools": tools}, indent=2, sort_keys=True))
+    research_blocking = bool(research["blocking_errors"]) and not args.allow_degraded_research
+    if lint["blocking_errors"] or tools["missing"] or research_blocking:
+        print(
+            json.dumps(
+                {
+                    "status": "blocked",
+                    "lint": lint,
+                    "research": research,
+                    "research_degraded_allowed": args.allow_degraded_research,
+                    "tools": tools,
+                },
+                indent=2,
+                sort_keys=True,
+            )
+        )
         return 2
 
     try:
@@ -108,6 +130,8 @@ def main() -> int:
                 "typst": str(typst_path),
                 "pdf": str(pdf_path),
                 "lint": lint,
+                "research": research,
+                "research_degraded_allowed": args.allow_degraded_research,
                 "tools": tools,
                 "diagrams": diagrams,
                 "post_checks": post,
@@ -149,6 +173,150 @@ def lint_markdown(path: Path) -> dict[str, Any]:
         "pseudocode_lines": pseudocode_lines,
         "citation_count": citations,
         "visual_refs": visual_refs,
+    }
+
+
+def check_research_artifacts(output_dir: Path) -> dict[str, Any]:
+    sources_dir = output_dir / "sources"
+    reviews_dir = output_dir / "reviews"
+    verification_dir = output_dir / "verification"
+    candidates_path = sources_dir / "candidates.jsonl"
+    manifest_path = sources_dir / "manifest.jsonl"
+    fanout_path = reviews_dir / "fanout-report.md"
+    evidence_paths = [
+        verification_dir / "evidence-matrix.md",
+        verification_dir / "evidence-matrix.jsonl",
+    ]
+
+    errors: list[str] = []
+    warnings: list[str] = []
+
+    candidates, candidate_errors = read_jsonl(candidates_path)
+    manifest, manifest_errors = read_jsonl(manifest_path)
+    errors.extend(candidate_errors)
+    errors.extend(manifest_errors)
+
+    distinct_candidates = {candidate_key(row) for row in candidates if candidate_key(row)}
+    downloaded_artifacts = [row for row in manifest if artifact_exists(output_dir, row)]
+    selected_artifacts = [row for row in downloaded_artifacts if artifact_selected(row)]
+    repo_artifacts = [
+        row
+        for row in downloaded_artifacts
+        if str(row.get("artifact_type", "")).lower()
+        in {"repo_diff", "repo_file", "repo_checkout", "commit", "tag", "release_diff"}
+        or str(row.get("local_path", "")).startswith("repos/")
+    ]
+    degraded_artifacts = [
+        row
+        for row in manifest
+        if str(row.get("status", "")).lower() in {"degraded", "blocked", "failed"}
+    ]
+    read_reports = sorted(
+        path
+        for path in reviews_dir.glob("*.md")
+        if path.name != "fanout-report.md" and path.is_file() and path.stat().st_size > 0
+    )
+    evidence_path = next((path for path in evidence_paths if path.exists() and path.stat().st_size > 0), None)
+
+    if not candidates_path.exists():
+        errors.append(f"missing candidate log: {candidates_path}")
+    if len(distinct_candidates) < RESEARCH_MIN_CANDIDATES:
+        errors.append(
+            f"candidate log has {len(distinct_candidates)} distinct candidates, expected at least {RESEARCH_MIN_CANDIDATES}"
+        )
+    if not manifest_path.exists():
+        errors.append(f"missing raw artifact manifest: {manifest_path}")
+    if len(downloaded_artifacts) < RESEARCH_MIN_RAW_ARTIFACTS:
+        errors.append(
+            f"manifest has {len(downloaded_artifacts)} locally saved raw artifacts, expected at least {RESEARCH_MIN_RAW_ARTIFACTS}"
+        )
+    if not fanout_path.exists() or fanout_path.stat().st_size == 0:
+        errors.append(f"missing fanout report: {fanout_path}")
+    if len(read_reports) < RESEARCH_MIN_READ_REPORTS:
+        errors.append(
+            f"found {len(read_reports)} per-source read reports, expected at least {RESEARCH_MIN_READ_REPORTS}"
+        )
+    if evidence_path is None:
+        errors.append(f"missing evidence matrix: one of {[str(path) for path in evidence_paths]}")
+    if not selected_artifacts:
+        warnings.append("manifest has no selected-source artifact records")
+    if not repo_artifacts:
+        warnings.append("manifest has no repo diff/checkouts; this is acceptable only if no selected repo items are used")
+    if not any((output_dir / "images").glob("*")):
+        warnings.append("images/ has no downloaded source visuals; Errata should explain if no source visual was available")
+
+    return {
+        "blocking_errors": errors,
+        "warnings": warnings,
+        "candidate_count": len(distinct_candidates),
+        "raw_artifact_count": len(downloaded_artifacts),
+        "selected_artifact_count": len(selected_artifacts),
+        "repo_artifact_count": len(repo_artifacts),
+        "degraded_artifact_count": len(degraded_artifacts),
+        "read_report_count": len(read_reports),
+        "paths": {
+            "candidates": str(candidates_path),
+            "manifest": str(manifest_path),
+            "fanout_report": str(fanout_path),
+            "evidence_matrix": str(evidence_path) if evidence_path else None,
+            "read_reports": [str(path) for path in read_reports],
+        },
+    }
+
+
+def read_jsonl(path: Path) -> tuple[list[dict[str, Any]], list[str]]:
+    if not path.exists():
+        return [], []
+    rows: list[dict[str, Any]] = []
+    errors: list[str] = []
+    for index, line in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1):
+        if not line.strip():
+            continue
+        try:
+            parsed = json.loads(line)
+        except json.JSONDecodeError as exc:
+            errors.append(f"{path}:{index} is not valid JSON: {exc.msg}")
+            continue
+        if not isinstance(parsed, dict):
+            errors.append(f"{path}:{index} is not a JSON object")
+            continue
+        rows.append(parsed)
+    return rows, errors
+
+
+def candidate_key(row: dict[str, Any]) -> str:
+    for key in ("id", "dedupe_key", "url", "title"):
+        value = row.get(key)
+        if value:
+            return str(value)
+    return ""
+
+
+def artifact_exists(output_dir: Path, row: dict[str, Any]) -> bool:
+    local_path = row.get("local_path")
+    if not local_path:
+        return False
+    path = Path(str(local_path)).expanduser()
+    if not path.is_absolute():
+        path = output_dir / path
+    try:
+        if path.is_file():
+            return path.stat().st_size > 0
+        if path.is_dir():
+            return any(child.is_file() and child.stat().st_size > 0 for child in path.rglob("*"))
+        return False
+    except OSError:
+        return False
+
+
+def artifact_selected(row: dict[str, Any]) -> bool:
+    intended_use = str(row.get("intended_use", "")).lower()
+    return bool(row.get("selected")) or intended_use in {
+        "selected_source",
+        "deep_dive",
+        "skim",
+        "verification",
+        "visual",
     }
 
 
