@@ -1,6 +1,6 @@
 ---
 name: deepbrief-daily
-description: Generate a high-recall Codex-native DeepBrief PDF for applied AI/agents work: screen 100+ sources, download 20+ raw artifacts, use explicit subagent fan-out when requested or from the app default prompt, deep-read selected sources, then render and verify without invoking the legacy Anthropic/Claude engine.
+description: "Generate a high-recall Codex-native DeepBrief PDF for applied AI/agents work: screen 100+ sources, download 20+ raw artifacts, use explicit subagent fan-out when requested or from the app default prompt, deep-read selected sources, then render and verify without invoking the legacy Anthropic/Claude engine."
 ---
 
 # DeepBrief Daily
