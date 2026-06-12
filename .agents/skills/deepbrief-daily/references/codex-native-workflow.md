@@ -34,6 +34,21 @@ When subagents are requested, there are two required stages:
 
 Deterministic scripts may fetch, dedupe, count, render, and perform mechanical checks. They may also create auxiliary `reviews/read-workers/` files. They do not count as requested subagents. If the app cannot spawn the requested subagents, stop before synthesis and ask the user whether to approve a degraded non-subagent run.
 
+Wave protocol when concurrency is capped:
+
+- On the first spawn failure, record the concrete thread cap in `reviews/fanout-report.md` and treat it as the wave size.
+- At collection time, close every completed agent before spawning the next wave; do not leave finished agents holding slots.
+- Size the next wave as `cap - currently_active`, not a guess. Repeat until the requested count is met or a hard limit blocks progress.
+- Log each wave in the fanout report: wave number, agent ids, completions, timeouts, failures.
+
+## Lane Synthesis (Reduce Tier)
+
+For monthly runs with many read reports, do not feed every read report into the composer's context. After all source-specific read subagents finish:
+
+- Spawn one lane-synthesis subagent per discovery lane (`papers`, `repos`, `company_posts`, `model_training`, `applied_product`, `discourse`).
+- Each lane-synthesis subagent reads its lane's `reviews/subagents/read-*.md` files **from disk**, then writes `reviews/synthesis/<lane>.md`: the lane's 3-5 themes, the strongest items with citation-ready evidence, cross-item connections, and what the composer should pull from which full report.
+- The composer works from the 6 lane syntheses plus the full read reports of the deep-dive winners only. It may open any other read report on demand, but the default working set is syntheses + winners.
+
 ## Daily Procedure
 
 1. **Prepare artifacts**
@@ -105,6 +120,7 @@ Deterministic scripts may fetch, dedupe, count, render, and perform mechanical c
 10. **Compose**
    - Write `brief.md` in the fixed order from `references/brief-contract.md`.
    - Include at least one explanatory diagram and at least one visual asset. Prefer a real source figure or screenshot when available and permitted; if none is available, document that in Errata and use an original diagram based on verified evidence.
+   - Paper deep dives must embed at least one real figure cropped from the locally saved PDF. Produce it deterministically, for example `pdftoppm -png -r 200 -f <page> -l <page> sources/papers/<paper>.pdf images/<paper>-p<page>` followed by a crop, and write a caption that says what the reader should see in it. A Mermaid diagram is the fallback, not the default, and using the fallback requires an Errata note explaining why no source figure was usable.
    - Crop or annotate paper screenshots before using them. A full paper page, formula dump, or unreadable screenshot is not a good reader visual.
    - Use inline code formatting for symbols, file paths, config keys, API fields, and model/release identifiers.
    - Keep code blocks short. Long blocks require a real source path in the fence info string, such as ````python source="repos/pkg/file.py"```` or ````text derived_from="sources/papers/example.txt:120"````.
@@ -120,9 +136,61 @@ Deterministic scripts may fetch, dedupe, count, render, and perform mechanical c
 12. **Render and QA**
    - Run `python <skill>/scripts/render_brief.py --input brief.md --out <artifact-dir>`.
    - Fix research-gate, lint, citation, layout, diagram, and PDF failures until the renderer reports `status: ok`.
+   - Run the print-quality loop until every check passes, not just until the renderer exits 0: rasterize the pages (the renderer leaves them under `pages/`), then verify that table-of-contents links land on the right sections, math renders as math rather than raw markup, every diagram is crisp and its labels legible at print size, no code block overflows the page margins, and fonts are embedded. Fix and re-render; repeat the inspection on the new pages.
    - Visually inspect representative rendered pages: cover/stats, deep-dive mechanism, diagram/visual page, skim page, and pipeline page. If any page is dense, illegible, or unstyled, revise content/template rather than accepting mechanical success.
    - If missing tools prevent PDF rendering, deliver the Markdown and the exact missing tool list.
    - Use `--allow-degraded-research` only after explicit user approval.
+
+## Canonical Subagent Prompts
+
+Compose every subagent prompt from these templates so report structure does not drift between waves. Fill the angle-bracket slots; keep the required-output sections verbatim because the renderer checks for them.
+
+### Discovery lane subagent
+
+```text
+You are a DeepBrief discovery subagent for the <lane> lane, window <start> to <end>.
+Reader profile: applied AI engineer, ~2h reading budget; prefers code-grounded agent
+harnesses, sandboxing/isolation internals, context engineering, evals/LLM-as-judge,
+and document AI; penalize model-release hype, business news, and thin announcements.
+Quota: <n>+ distinct candidates. Slice your queries by week across the window
+(<list the week ranges>) so coverage does not collapse onto the most recent week, and
+take no more than 15 candidates from any single feed or query (source_id).
+For each candidate record: id, source_id, type, title, url, published_at, lane,
+dedupe_key, one-line summary, why_candidate, quality_signals, author_check.
+Write your lane report to <artifact-dir>/reviews/fanout/<lane>.md with: candidate
+count vs quota, source types searched, the week-sliced date-window method, duplicate
+clusters, blocked sources, any week-coverage shortfall, and your top 10 with reasons.
+```
+
+### Source-specific read subagent
+
+```text
+You are a DeepBrief read subagent for <item-id> (<title>), selected as <deep_dive|skim>.
+Local artifacts (read-only; do not execute anything): <exact local paths>.
+Inspect the full artifact with read-only commands (rg, nl, sed -n, pdftotext, pdfinfo,
+git show, git grep). Do not skim by keyword only.
+Write <artifact-dir>/reviews/subagents/read-<item-id>.md with exactly these sections:
+## Artifact inventory  (files/figures/tables/pages inspected; deep dives: full
+   figure/table or file inventory)
+## Mechanism  (how it actually works, as a staged flow grounded in the artifact)
+## Limitations  (what the source does not show or claims without evidence)
+## Evidence  (bullet list of exact local refs like `sources/papers/x.txt:120`;
+   at least 10 for deep dives, 3 for skims)
+## Open questions
+Deep-dive reports need 1000+ words, skims 350+. End with what the final synthesis
+should pull from this source.
+```
+
+### Lane-synthesis subagent
+
+```text
+You are a DeepBrief lane-synthesis subagent for the <lane> lane.
+Read these reports from disk: <artifact-dir>/reviews/subagents/read-<ids in lane>.md.
+Write <artifact-dir>/reviews/synthesis/<lane>.md with: the lane's 3-5 themes for the
+month; the strongest items with citation-ready evidence pointers into the read
+reports; cross-item connections; and which full reports the composer should open.
+Do not introduce claims that are not in the read reports.
+```
 
 ## Output Contract
 
