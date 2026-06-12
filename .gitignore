@@ -2,6 +2,7 @@
 .venv/
 .history/
 .cache/
+artifacts/
 __pycache__/
 *.pyc
 .mypy_cache/
@@ -15,3 +16,9 @@ __pycache__/
 build/
 dist/
 *.egg-info/
+calibration/raw/
+calibration/sessions/
+calibration/rubrics/
+calibration/pool/
+calibration/replays/
+calibration/candidates/
