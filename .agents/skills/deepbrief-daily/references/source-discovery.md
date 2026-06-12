@@ -52,6 +52,19 @@ Screen at least 100 distinct candidates before final ranking. Use these lane tar
 - High-signal builder discourse leads: 10+.
 
 Do not let OpenAI, Anthropic, Codex, or Claude Code crowd out the whole brief. They are primary resources, not the entire source universe.
+Do not replace missing lane coverage with many adjacent releases from one repository or many low-signal papers from one query. If a lane is thin, record the shortfall and backfill from the closest adjacent lane with primary-source evidence.
+
+## Monthly Discovery Subagent Requirements
+
+When the user requests a monthly/high-recall run with explicit source-balance counts, those counts replace the daily lane targets above.
+
+For a 1,000-source monthly run, discovery must be subagent-led:
+
+- Spawn separate discovery subagents or waves for each major lane: papers/evals/benchmarks, repo/source-code items, company/lab engineering posts/docs, builder discourse/X/blog/newsletter/podcast leads, model-training/inference/frontier operations, and applied product/document AI workflows.
+- Give each discovery subagent a numeric quota that matches the user's lane target. If the user asks for 200+ items in a lane, the lane assignment must say 200+ and the lane report must account for that target.
+- Save every discovery subagent return under `reviews/fanout/` or `reviews/subagents/` before ranking. The lane report must include candidate count, source types searched, date-window method, duplicate clusters, blocked sources, and primary-source verification plan.
+- A deterministic collector may normalize, dedupe, fetch, and merge candidates into `sources/candidates.jsonl`, but it cannot be the only evidence that a lane was searched when the user asked for subagents.
+- If an accessible X/blog/newsletter/podcast lane cannot meet the requested count, record the exact blocker and ask before backfilling or rendering. Do not silently replace it with low-signal HN rows or adjacent GitHub issues.
 
 ## Search And Fetch Procedure
 
@@ -91,8 +104,11 @@ Track each candidate with:
   "lane": "papers | repos | company_posts | model_training | applied_product | discourse",
   "discovered_by": "main | subagent:<name> | wave:<n>",
   "dedupe_key": "...",
+  "dedupe_cluster": "...",
   "summary": "...",
   "why_candidate": "...",
+  "quality_signals": ["primary_source", "repo_available", "credible_author_or_org", "recent", "implementation_detail"],
+  "author_check": "verified_org | known_builder | paper_authors_checked | unknown",
   "download_status": "downloaded | pending | degraded | blocked | skipped",
   "raw_artifact_paths": ["sources/raw/example.html"],
   "score": null,
@@ -137,6 +153,10 @@ Penalties:
 - Repeated item already covered: -50 or skip.
 - Marketing-only article: -20.
 - Discourse-only claim without primary-source backing: -20 or use as lead only.
+- Paper with no credible author/source signal, no code/data, and no obvious applied mechanism: -15 to -35.
+- Feed padding from the same repo, blog, or arXiv query after the first high-value cluster member: -10 to -30 unless each item has distinct implementation evidence.
+
+For papers, check at least one of arXiv metadata, project page, repository, Semantic Scholar-style citation/author signals when available, or an institutional/author homepage. Favor papers that provide code, datasets, benchmarks, reproducible eval harnesses, or direct product implications. Do not select a random dissertation or low-signal preprint only because it is recent.
 
 ## Repo Inspection Rules
 
@@ -154,3 +174,4 @@ Penalties:
 - Save downloaded images under `images/` and cite source URLs.
 - Every PDF must contain at least one visual asset.
 - Mermaid satisfies the diagram requirement but does not count as a downloaded source figure. If no source visual is available or permitted, document why in Errata.
+- Do not use an unreadable full PDF page as the primary visual. Crop to the relevant figure/table or add an annotation/callout in the caption that explains why the reader should inspect it.

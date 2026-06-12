@@ -17,10 +17,22 @@ This is a long-running research workflow. Do not stop after a small set of conve
 - Locally save at least 20 raw artifacts.
 - Preserve one local artifact for every selected item.
 - Deep-read selected items before drafting.
-- Record subagent fan-out or equivalent main-agent wave work.
+- Record actual subagent fan-out when the user asks for subagents, parallel agents, one-agent-per-source work, or monthly/high-recall gates.
 - Tie material claims to local evidence.
+- Produce a designed, readable PDF, not just a mechanically valid PDF.
 
 If a sandbox, network policy, source outage, auth wall, or Codex app limit prevents a gate, document the exact limit and ask for explicit approval before rendering a degraded PDF.
+
+## Monthly And Explicit-Subagent Guardrail
+
+For monthly or other high-recall runs, the user's requested counts override the daily defaults. If the user asks for 1,000 screened sources, 100 raw artifacts, 100 read reports, or one source-specific subagent per source, treat those numbers as hard gates.
+
+When subagents are requested, there are two required stages:
+
+1. Discovery subagents: spawn multiple lane subagents or waves sized to the requested source-balance quotas. For a 1,000-source monthly run, assign roughly 200 leads per major lane across papers/evals, repo/source-code, company/lab posts, builder discourse/X/blog/newsletter/podcast, model-training/inference, and applied product/document AI unless the user gives different lane counts. Save each lane report before ranking.
+2. Source-specific read subagents: after selecting the 100+ local artifact-backed sources, spawn one actual subagent for each selected artifact. Give each subagent exact local paths and require full-artifact inspection. Save each report as `reviews/subagents/read-<item-id>.md`.
+
+Deterministic scripts may fetch, dedupe, count, render, and perform mechanical checks. They may also create auxiliary `reviews/read-workers/` files. They do not count as requested subagents. If the app cannot spawn the requested subagents, stop before synthesis and ask the user whether to approve a degraded non-subagent run.
 
 ## Daily Procedure
 
@@ -41,13 +53,18 @@ If a sandbox, network policy, source outage, auth wall, or Codex app limit preve
    - Download at least 20 raw artifacts before synthesis. Raw artifacts include HTML, Markdown, PDF, extracted full text, release notes, changelog entries, repo diffs, source files, figures, screenshots, or metadata JSON.
    - Save every downloaded artifact as a JSONL record in `sources/manifest.jsonl` with local path, source URL, artifact type, byte count, fetch status, and intended use.
    - Include a source log with verified, substituted, degraded, skipped, and blocked sources.
+   - Keep the lane quotas from `references/source-discovery.md` visible while screening. Do not satisfy the 100-candidate gate mostly by expanding one release feed or one arXiv query.
    - Prefer recent items, but keep one foundational item if it explains today's frontier.
 
 4. **Fan out**
    - When the user prompt or app default prompt explicitly asks for subagents, spawn read-heavy subagents for independent lanes: papers/evals, repos/releases, company/engineering posts, model-training/inference notes, applied document/extraction AI, builder discourse, and verification.
-   - If `agents.max_threads` or the app limits concurrency, run agents in waves and record the limit.
-   - If subagent tools are unavailable, the main agent must perform equivalent wave-based work and write the same reports.
-   - Save `reviews/fanout-report.md` with lane assignments, source counts, raw downloads, top candidates, failed fetches, and unresolved gaps.
+   - If `agents.max_threads` or the app limits concurrency, run agents in waves and record the limit. Continue wave spawning until the requested subagent count is met or a hard app limit blocks progress.
+   - If subagent tools are unavailable or a hard app limit prevents the requested count, stop before synthesis and ask the user whether to approve a degraded non-subagent run.
+   - Save each required discovery lane's raw return under `reviews/fanout/<lane>.md` or `reviews/subagents/<lane>.md` before summarizing it. Required discovery lane names are `papers`, `repos`, `company_posts`, `model_training`, `applied_product`, and `discourse`.
+   - After the shortlist is chosen and raw artifacts are downloaded, spawn one source-specific read/verification subagent per selected artifact when the user requested source-specific subagents or 100+ deep-read workers. Give each subagent exact local paths and ask it to inspect the saved artifact with read-only shell commands such as `rg`, `nl`, `sed`, `pdfinfo`, `pdftotext`, `git show`, and `git grep`.
+   - Save selected-source local read outputs as `reviews/subagents/read-<item-id>.md`. Each must list local paths inspected, exact evidence references found, mechanism notes, limitations, and what should appear in the final synthesis.
+   - Do not count script-generated `reviews/read-workers/*.md` as source-specific subagent outputs unless the user explicitly approved a degraded non-subagent run after being told the requested subagents could not be spawned.
+   - Save `reviews/fanout-report.md` with lane assignments, source counts, raw downloads, top candidates, failed fetches, unresolved gaps, and links to the saved raw lane reports.
 
 5. **Rank**
    - Score each candidate 0-100 from relevance, groundedness, depth fit, novelty, and source quality.
@@ -58,27 +75,32 @@ If a sandbox, network policy, source outage, auth wall, or Codex app limit preve
 
 6. **Deep-read selected sources**
    - For every selected item, preserve a local raw artifact and write `reviews/<item-id>.md`.
-   - For papers: save PDF or extracted full text, read end to end, and inventory figures, tables, appendices, limitations, and evaluation claims.
-   - For code/repo releases: clone or export only the relevant tag, diff, commit range, or PR set; read relevant files end to end; never execute downloaded code.
+   - For papers: save PDF or extracted full text, read end to end, and inventory figures, tables, appendices, limitations, evaluation claims, author/source quality, and links to code or project pages when available.
+   - For code/repo releases: clone or export only the relevant tag, diff, commit range, or PR set; read relevant files end to end; capture entry points, state transitions, tests, prompts, security boundaries, and exact file/line evidence; never execute downloaded code.
    - For company posts and benchmark pages: save raw HTML/text and separate primary-source claims from commentary.
    - For builder discourse or X-derived leads: treat posts as discovery signals only; verify claims against primary links before citing.
+   - A read report is not just a citation stub. It should include the local artifact inventory, what was read, mechanism, limitations, evidence references, and what the source changes about the final synthesis.
 
 7. **Analyze deep target**
    - Use the selected read report plus raw artifacts.
    - For code: inspect the release diff or explicit scope first; expand to repository-level context only when needed to understand entry points, state, prompts, and runtime behavior. Do not execute downloaded code.
-   - For article/paper: identify the mechanism, assumptions, visual evidence, and an exercise.
+   - For article/paper: identify the mechanism, assumptions, visual evidence, limits, and an exercise. Do not turn the paper into fake code unless the source itself provides an algorithm worth translating.
    - Build the deep dive exactly with the schema in `references/brief-contract.md`.
 
 8. **Verify**
    - Write `verification/evidence-matrix.md` or `verification/evidence-matrix.jsonl`.
    - Code: mechanically verify every cited `file:line` and at least 90 percent of symbols with `rg`, `git grep`, `sed -n`, or equivalent read-only commands.
    - Article/paper: verify quoted claims against saved PDF/full text, source pages, or local extracts.
+   - Verify that each final body paragraph with a source-specific claim has a nearby local evidence reference or URL.
    - A source cannot be labeled `Verified` unless its local artifact exists and the evidence matrix references it.
    - Strike unsupported claims or move them to Errata.
 
 9. **Compose**
    - Write `brief.md` in the fixed order from `references/brief-contract.md`.
-   - Include at least one Mermaid diagram and at least one visual asset. Prefer a real source figure or screenshot when available and permitted; if none is available, document that in Errata and use an original Mermaid diagram.
+   - Include at least one explanatory diagram and at least one visual asset. Prefer a real source figure or screenshot when available and permitted; if none is available, document that in Errata and use an original diagram based on verified evidence.
+   - Crop or annotate paper screenshots before using them. A full paper page, formula dump, or unreadable screenshot is not a good reader visual.
+   - Use inline code formatting for symbols, file paths, config keys, API fields, and model/release identifiers.
+   - Keep code blocks short. Long blocks require a real source path in the fence info string, such as ````python source="repos/pkg/file.py"```` or ````text derived_from="sources/papers/example.txt:120"````.
    - Include `Pipeline Report`, `Tomorrow's Queue`, and `Errata`.
    - The Markdown must be final prose, not notes or TODOs.
 
@@ -89,7 +111,8 @@ If a sandbox, network policy, source outage, auth wall, or Codex app limit preve
 
 11. **Render and QA**
    - Run `python <skill>/scripts/render_brief.py --input brief.md --out <artifact-dir>`.
-   - Fix research-gate, lint, citation, layout, and PDF failures until the renderer reports `status: ok`.
+   - Fix research-gate, lint, citation, layout, diagram, and PDF failures until the renderer reports `status: ok`.
+   - Visually inspect representative rendered pages: cover/stats, deep-dive mechanism, diagram/visual page, skim page, and pipeline page. If any page is dense, illegible, or unstyled, revise content/template rather than accepting mechanical success.
    - If missing tools prevent PDF rendering, deliver the Markdown and the exact missing tool list.
    - Use `--allow-degraded-research` only after explicit user approval.
 

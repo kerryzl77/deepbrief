@@ -40,9 +40,11 @@ Use these exact headings under the deep dive:
 # <title>
 ## TL;DR
 ## Mental model
-## Pseudocode
+## Why this matters now
+## Mechanism trace
+## Evidence map
 ## Walkthrough
-## What prompts are injected
+## Implementation notes
 ## Try it yourself
 ## Open questions
 ## Sources & citations
@@ -51,11 +53,20 @@ Use these exact headings under the deep dive:
 Rules:
 
 - `TL;DR`: at most five bullets.
-- `Pseudocode`: exactly one fenced block, 30-80 nonblank lines.
-- `Walkthrough`: code uses a file-by-file trace table; article/paper uses a rebuild-from-scratch plan.
-- `What prompts are injected`: for non-code paths, state `Not applicable for this article/paper path.`
-- `Sources & citations`: at least three citations.
-- Include one Mermaid diagram in the deep dive or concept section.
+- `Why this matters now`: explain the operational impact in 2-4 paragraphs, with inline citations for material claims.
+- `Mechanism trace`: explain the actual system, benchmark, workflow, or paper mechanism as a staged flow. Include one readable diagram or compact table when it clarifies the flow.
+- `Evidence map`: include a table that maps key claims to local artifacts and exact evidence references.
+- `Walkthrough`: for code/repo targets, start with worktree shape, then trace entry points, state/data flow, security or approval boundaries, tests, and exact files. For papers/articles, trace local artifact inventory, central claim, method or eval setup, results, limits, and how to adapt it.
+- `Implementation notes`: include real code, config, prompt, API payload, or diff snippets only when they come from inspected artifacts. Do not include a long pseudocode block just to satisfy format.
+- `Sources & citations`: include a compact bibliography, but body paragraphs must already carry inline local references or source links.
+- Include one explanatory diagram and one visual asset. A poor full-page paper screenshot does not qualify unless it is cropped or annotated and explained in the caption.
+- Do not use a `## Pseudocode` heading in production briefs. Long pseudocode is allowed only when the source itself is an algorithmic artifact and the block is labeled with a `source=` or `derived_from=` fence attribute.
+
+Inline evidence:
+
+- Put an inline citation after every material claim, metric, release detail, or source-specific interpretation.
+- Prefer local evidence refs such as `sources/papers/example.txt:123`, `repos/pkg/file.ts:45`, or `reviews/item.md:12`. Use source URLs when a local line reference is not available.
+- Do not move all citations to the end of a section. End citations are a bibliography, not evidence for the prose.
 
 ## Skim Cards
 
@@ -65,6 +76,7 @@ Each skim card should be 120-180 words and include:
 - Why it matters.
 - Read-or-skip verdict.
 - Item ID and source URL.
+- At least two inline evidence references or source links near the claims they support.
 
 ## Foundations & Connections
 
@@ -73,7 +85,7 @@ Include:
 - 3-7 concepts.
 - One sentence per concept.
 - At least one edge from a new concept to a prior/foundational concept.
-- One Mermaid graph.
+- One readable concept graph or mechanism diagram. Mermaid is acceptable only when the rendered labels are legible and the caption explains the point of the graph.
 
 ## Pipeline Report
 
@@ -106,9 +118,14 @@ The rendered PDF should pass both research gates and render gates.
 Research gates:
 
 - `sources/candidates.jsonl` exists and records at least 100 distinct screened candidates.
+- Candidate coverage meets the source-discovery lane minimums, or the run explicitly blocks before rendering and reports why a lane could not be covered.
 - `sources/manifest.jsonl` exists and records at least 20 locally saved raw artifacts with valid local paths.
 - `reviews/fanout-report.md` exists and records subagent or wave-based source work.
+- Raw subagent or wave outputs exist under `reviews/fanout/` or `reviews/subagents/`.
+- For monthly/high-recall runs where the user requested discovery subagents by source lane, `reviews/fanout-report.md` must list the actual discovery subagent ids, lane quotas, completed counts, saved lane report paths, and any lane shortfalls.
+- For runs where the user requested one source-specific subagent per selected artifact, `reviews/subagents/read-*.md` must contain one actual subagent-written report per selected artifact. Script-generated `reviews/read-workers/*.md` files are auxiliary evidence only and do not satisfy this gate without explicit degraded-run approval.
 - At least one per-selected-source read report exists for the deep dive and each skim target.
+- Selected-source read reports are substantive: deep dive reports include full-document/full-diff structure, evidence references, limitations, and figure/table or file/artifact inventory; skim reports include mechanism, limitations, and exact local evidence.
 - `verification/evidence-matrix.md` or `verification/evidence-matrix.jsonl` exists.
 - Every selected item has a local source artifact.
 - Repo items have local diff, tag, commit, checkout, or source-file evidence; release-note-only repo items are degraded.
@@ -118,12 +135,16 @@ Research gates:
 Render gates:
 
 - Nonzero PDF.
-- 8-30 pages target.
+- 8-30 pages target for daily runs. For monthly/high-recall runs, user-provided page targets override this daily range; if none is provided, use a longer monthly target only when the evidence depth supports it.
 - Fonts embedded.
 - Table of contents present.
-- At least one Mermaid SVG or other image embedded.
+- At least one readable explanatory diagram and one visual asset embedded. Mermaid diagrams are rendered as images so labels survive PDF generation.
+- No generic diagram captions such as `Mermaid diagram 1`.
 - Math text present.
 - No unsupported code citations.
+- Inline citation density passes the renderer gate.
+- No forced long pseudocode block for paper/article targets.
+- No unannotated, unreadable full-page paper screenshot used as the primary visual.
 - Feedback file exists next to PDF.
 
 ## Not Acceptable
@@ -134,5 +155,8 @@ Render gates:
 - A PDF that claims sources are verified without local artifact evidence.
 - A PDF with placeholders, TODOs, or missing source citations.
 - A PDF without visual content.
+- A PDF that passes mechanical rendering while being too dense, unstyled, or hard to scan.
+- A PDF whose main technical explanation is fake code instead of a source-aware mechanism trace.
+- A PDF with empty-looking or illegible diagrams.
 - A PDF generated by invoking the legacy Anthropic-backed engine.
 - A PDF that is not ready for the user's daily reading session.
