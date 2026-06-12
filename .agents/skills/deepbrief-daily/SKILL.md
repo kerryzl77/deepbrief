@@ -35,6 +35,14 @@ These guardrails override any softer wording elsewhere in this skill.
 - If app concurrency is capped, spawn the source-specific subagents in waves until the requested count is met. Record wave size, completed agent ids, timeouts, and failures in `reviews/fanout-report.md`.
 - If the requested number of subagents cannot be spawned, stop before synthesis or rendering and ask the user whether to approve a degraded run. Do not silently satisfy the gate with local scripts.
 
+## Hard Composition Guardrails
+
+- Author all final prose and diagrams from the read reports and lane syntheses, in-session or via composer subagents. Never generate deep-dive, skim-card, or section prose from string templates or scripts; scripts may only concatenate already-authored Markdown. The renderer rejects duplicated blocks, repeated sentences, and dive pairs that share sentences.
+- Each deep dive's mechanism trace, diagram labels, evidence-map claims, snippet, and experiment must come from that source's own read report. If two dives would share a diagram or paragraph, fix the composition, not the gate.
+- On large runs, draft each deep dive to `drafts/deep-dive-<nn>-<item-id>.md` right after lane synthesis, then assemble `brief.md` from the drafts. After context compaction, re-read drafts and syntheses from disk instead of reconstructing from memory.
+- Never edit `scripts/render_brief.py`, `assets/brief.typ`, or gate thresholds during a run to make a failing gate pass. If a gate seems wrong for the run shape, stop and ask the user.
+- Never pad read reports or audit artifacts to satisfy count gates; the renderer ignores report sections whose heading mentions the renderer.
+
 ## Required Reads
 
 Before generating a real brief, read these references:
@@ -64,7 +72,7 @@ These files are inputs only. Do not write to `profile.md` or `preferences.md`; t
 8. Pick one deep dive and 4-6 skim items only after the research gates pass.
 9. For each selected item, download or preserve a local raw artifact and write a substantive per-source read report under `reviews/`. The deep-dive report must be materially deeper than skim reports and must show full-document or full-diff inspection, not only keyword hits.
 10. Write `verification/evidence-matrix.md` or `verification/evidence-matrix.jsonl` tying claims to local artifacts and exact sections, pages, or lines.
-11. Write a complete, ready-to-read `brief.md` following `references/brief-contract.md`. Use source-aware mechanism traces, inline evidence, and real code/config snippets only when they come from inspected artifacts.
+11. Write a complete, ready-to-read `brief.md` following `references/brief-contract.md` and the Hard Composition Guardrails above: author each section from its read reports and lane syntheses (drafting deep dives to `drafts/` first on large runs), use source-aware mechanism traces, inline evidence, and real code/config snippets only when they come from inspected artifacts. Never emit final prose from a script template.
 12. Run `python scripts/render_brief.py --input <brief.md> --out <artifact-dir>`.
 13. Fix research, citation, layout, or quality-gate failures until the PDF is ready to read.
 
@@ -121,5 +129,7 @@ Do not execute these by default:
 - Launchd install/kickstart commands or legacy calibration/tuner replay commands.
 - Downloaded repository test/build/install commands.
 - Writes inside downloaded source repositories, except creating separate exported diffs or notes in the artifact directory.
+- Scripts that generate final `brief.md` prose, deep dives, skim cards, or diagrams from templates.
+- Edits to `scripts/render_brief.py`, `assets/brief.typ`, or gate thresholds made during a run to pass a failing gate.
 
 Local Python scripts in this skill are allowed only for deterministic parsing, file assembly, rendering, and verification.

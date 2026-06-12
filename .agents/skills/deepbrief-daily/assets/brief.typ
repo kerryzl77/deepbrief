@@ -37,6 +37,7 @@
 #show heading.where(level: 1): set block(above: 1.6em, below: 0.8em)
 #show heading.where(level: 2): set text(size: 12.4pt, fill: accent-dark, weight: "bold")
 #show heading.where(level: 3): set text(size: 10.8pt, fill: accent, weight: "bold")
+#show heading: set block(sticky: true)
 
 #show link: it => text(fill: accent-dark)[#underline(it)]
 

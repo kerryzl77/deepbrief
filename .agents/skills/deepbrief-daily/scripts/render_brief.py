@@ -28,6 +28,13 @@ MIN_CITATION_APPENDIX_ENTRIES = 5
 MIN_CITED_PARAGRAPH_RATIO = 0.55
 MAX_UNSOURCED_CODE_BLOCK_LINES = 24
 MAX_CANDIDATES_PER_SOURCE_ID = 15
+REDUNDANCY_MIN_BLOCK_CHARS = 40
+REDUNDANCY_MIN_SENTENCE_CHARS = 60
+REDUNDANCY_MAX_SENTENCE_REPEATS = 2
+REDUNDANCY_MAX_DIVE_OVERLAP_RATIO = 0.30
+REDUNDANCY_MIN_DIVE_SENTENCES = 5
+REDUNDANCY_MAX_DIAGRAM_SIMILARITY = 0.6
+MERMAID_SYNTAX_TOKENS = {"flowchart", "graph", "subgraph", "end", "classdef", "style", "linkstyle", "click", "direction"}
 MONTHLY_MIN_LANE_WEEKS = 3
 MONTHLY_MIN_DEEP_DIVES = 2
 MONTHLY_MIN_DIVE_SOURCE_CITATIONS = 3
@@ -37,6 +44,7 @@ MERMAID_SCALE = 2
 MERMAID_VIEWPORT_PX = 4096
 MERMAID_NATURAL_LABEL_PT = 12.0
 MIN_DIAGRAM_LABEL_PT = 7.0
+MAX_DIAGRAM_EMBED_HEIGHT_IN = 6.8
 RESEARCH_LANE_MINIMUMS = {
     "papers": 25,
     "repos": 25,
@@ -46,6 +54,16 @@ RESEARCH_LANE_MINIMUMS = {
     "discourse": 10,
 }
 RESEARCH_REQUIRED_FANOUT_LANES = tuple(RESEARCH_LANE_MINIMUMS.keys())
+RESEARCH_LANE_ALIASES = {
+    "papers_evals_benchmarks": "papers",
+    "repo_source_code": "repos",
+    "company_lab_docs": "company_posts",
+    "eval_observability_security": "company_posts",
+    "model_training_inference_ops": "model_training",
+    "applied_doc_ai_workflows": "applied_product",
+    "builder_discourse": "discourse",
+    "lectures_courses_talks": "papers",
+}
 REQUIRED_HEADINGS_DAILY = [
     "# Today's Deep Dive",
     "# Skim Cards",
@@ -333,6 +351,7 @@ def lint_markdown(path: Path, profile: str) -> dict[str, Any]:
     appendix = citation_appendix_metrics(text)
     code_blocks = check_code_blocks(text)
     weak_visuals = weak_visual_captions(text)
+    redundancy = check_template_redundancy(text, profile)
     if re.search(r"^#{2,3} Pseudocode\s*$", text, flags=re.MULTILINE):
         errors.append("old `## Pseudocode` heading is no longer accepted; use `## Mechanism trace` plus real source snippets")
     if visual_refs < 2:
@@ -364,6 +383,7 @@ def lint_markdown(path: Path, profile: str) -> dict[str, Any]:
     errors.extend(appendix["blocking_errors"])
     errors.extend(code_blocks["blocking_errors"])
     errors.extend(weak_visuals)
+    errors.extend(redundancy["blocking_errors"])
     return {
         "blocking_errors": errors,
         "citation_count": citations,
@@ -372,6 +392,7 @@ def lint_markdown(path: Path, profile: str) -> dict[str, Any]:
         "inline_evidence": inline,
         "code_blocks": code_blocks["blocks"],
         "weak_visual_warnings": weak_visuals,
+        "template_redundancy": redundancy,
     }
 
 
@@ -395,6 +416,11 @@ def monthly_deepdive_errors(text: str) -> list[str]:
             f"{MONTHLY_MIN_DEEP_DIVES}; group every deep dive as a `##` section under the single # Deep Dives heading"
         )
     for title, body in dives:
+        if re.search(r"[\w(]\.$", title) and not title.endswith(("...", "…")):
+            errors.append(
+                f"deep dive title {title!r} looks truncated mid-word; use the full source title or a clean "
+                "shortened form without a trailing cut"
+            )
         missing = [
             heading
             for heading in MONTHLY_DEEPDIVE_SUBHEADINGS
@@ -574,6 +600,14 @@ def check_code_blocks(text: str) -> dict[str, Any]:
         blocks.append(block)
         if language in {"mermaid", "tex"}:
             continue
+        attr = re.search(r"\b(?:source|derived_from)=['\"]([^'\"]+)['\"]", info)
+        if attr:
+            value = attr.group(1).strip()
+            if "/" not in value and not re.search(r"\.\w{1,8}(?::\d+(?:-\d+)?)?$", value):
+                errors.append(
+                    f"code block source attribution {value!r} is not a concrete artifact/repo path; "
+                    "cite the exact file that produced the snippet"
+                )
         if line_count > MAX_UNSOURCED_CODE_BLOCK_LINES:
             if language not in ALLOWED_LONG_CODE_LANGS or not LONG_CODE_SOURCE_RE.search(info):
                 errors.append(
@@ -597,6 +631,106 @@ def weak_visual_captions(text: str) -> list[str]:
         if alt_text in {"image", "diagram", "figure", "screenshot", "mermaid diagram"}:
             errors.append(f"image {path!r} has a generic alt text/caption")
     return errors
+
+
+def normalized_sentences(text: str) -> list[str]:
+    prose_lines = [
+        line
+        for line in text.splitlines()
+        if line.strip() and not line.lstrip().startswith(("#", "|", ">", "-", "*", "!", "```"))
+    ]
+    sentences: list[str] = []
+    for raw in re.split(r"(?<=[.!?])\s+", " ".join(prose_lines)):
+        cleaned = re.sub(r"\[\d+\]\(#source-\d+\)", " ", raw)
+        cleaned = re.sub(r"\s+", " ", cleaned).strip().lower()
+        if len(cleaned) >= REDUNDANCY_MIN_SENTENCE_CHARS:
+            sentences.append(cleaned)
+    return sentences
+
+
+def check_template_redundancy(text: str, profile: str) -> dict[str, Any]:
+    errors: list[str] = []
+    body = before_top_level_section(text, "# Citation Appendix")
+
+    block_counts: dict[str, int] = {}
+    for match in re.finditer(r"^```([^\n]*)\n(.*?)^```", body, flags=re.DOTALL | re.MULTILINE):
+        info = match.group(1).strip()
+        language = info.split()[0].lower() if info else ""
+        if language == "tex":
+            continue
+        key = re.sub(r"\s+", " ", match.group(2)).strip()
+        if len(key) >= REDUNDANCY_MIN_BLOCK_CHARS:
+            block_counts[key] = block_counts.get(key, 0) + 1
+    for key, count in sorted(block_counts.items()):
+        if count >= 2:
+            errors.append(
+                f"identical code/diagram block appears {count} times ({key[:80]!r}...); every section needs "
+                "source-specific snippets and diagrams, not a shared template"
+            )
+
+    visible = strip_fenced_code(body)
+    sentence_counts: dict[str, int] = {}
+    for sentence in normalized_sentences(visible):
+        sentence_counts[sentence] = sentence_counts.get(sentence, 0) + 1
+    repeated = {s: c for s, c in sentence_counts.items() if c > REDUNDANCY_MAX_SENTENCE_REPEATS}
+    for sentence, count in sorted(repeated.items(), key=lambda kv: -kv[1])[:8]:
+        errors.append(
+            f"boilerplate sentence repeated {count} times ({sentence[:90]!r}...); write each section from its "
+            "own read report instead of stamping a template"
+        )
+
+    overlap_pairs: list[dict[str, Any]] = []
+    similar_diagram_pairs: list[dict[str, Any]] = []
+    if profile == "monthly":
+        dives = split_subsections(top_level_section(text, "# Deep Dives"), 2)
+        dive_diagrams: list[tuple[str, set[str]]] = []
+        for title, dive_body in dives:
+            for diagram in re.findall(r"^```mermaid\s*\n(.*?)^```", dive_body, flags=re.DOTALL | re.MULTILINE):
+                tokens = {
+                    token
+                    for token in re.findall(r"[a-z][a-z0-9_-]{2,}", diagram.lower())
+                    if token not in MERMAID_SYNTAX_TOKENS
+                }
+                if len(tokens) >= 4:
+                    dive_diagrams.append((title, tokens))
+        for i in range(len(dive_diagrams)):
+            for j in range(i + 1, len(dive_diagrams)):
+                title_a, tokens_a = dive_diagrams[i]
+                title_b, tokens_b = dive_diagrams[j]
+                if title_a == title_b:
+                    continue
+                similarity = len(tokens_a & tokens_b) / len(tokens_a | tokens_b)
+                if similarity > REDUNDANCY_MAX_DIAGRAM_SIMILARITY:
+                    similar_diagram_pairs.append({"dives": [title_a, title_b], "similarity": round(similarity, 2)})
+        for pair in similar_diagram_pairs[:6]:
+            errors.append(
+                f"deep dives {pair['dives'][0]!r} and {pair['dives'][1]!r} have near-identical diagrams "
+                f"({pair['similarity']:.0%} shared labels); each diagram must name its own source's components"
+            )
+        dive_sentences = [
+            (title, set(normalized_sentences(strip_fenced_code(dive_body)))) for title, dive_body in dives
+        ]
+        for i in range(len(dive_sentences)):
+            for j in range(i + 1, len(dive_sentences)):
+                title_a, sents_a = dive_sentences[i]
+                title_b, sents_b = dive_sentences[j]
+                smaller = min(len(sents_a), len(sents_b))
+                if smaller < REDUNDANCY_MIN_DIVE_SENTENCES:
+                    continue
+                ratio = len(sents_a & sents_b) / smaller
+                if ratio > REDUNDANCY_MAX_DIVE_OVERLAP_RATIO:
+                    overlap_pairs.append({"dives": [title_a, title_b], "shared_ratio": round(ratio, 2)})
+                    errors.append(
+                        f"deep dives {title_a!r} and {title_b!r} share {ratio:.0%} of their sentences; each dive "
+                        "must be composed from its own source's read report"
+                    )
+    return {
+        "blocking_errors": errors,
+        "duplicate_block_count": sum(1 for c in block_counts.values() if c >= 2),
+        "repeated_sentence_count": len(repeated),
+        "dive_overlap_pairs": overlap_pairs,
+        "similar_diagram_pairs": similar_diagram_pairs,
+    }
 
 
 def check_research_artifacts(output_dir: Path, profile: str) -> dict[str, Any]:
@@ -627,6 +761,9 @@ def check_research_artifacts(output_dir: Path, profile: str) -> dict[str, Any]:
             continue
         lane = str(row.get("lane", "")).strip()
         lane_candidate_keys.setdefault(lane, set()).add(key)
+        alias = RESEARCH_LANE_ALIASES.get(lane)
+        if alias:
+            lane_candidate_keys.setdefault(alias, set()).add(key)
     lane_counts = {lane: len(keys) for lane, keys in lane_candidate_keys.items()}
     source_concentration = candidate_source_concentration(candidates)
     week_coverage = candidate_week_coverage(candidates)
@@ -781,12 +918,17 @@ def candidate_source_concentration(candidates: list[dict[str, Any]]) -> dict[str
 def candidate_week_coverage(candidates: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
     coverage: dict[str, dict[str, Any]] = {}
     for row in candidates:
-        lane = str(row.get("lane", "")).strip()
-        entry = coverage.setdefault(lane, {"weeks": set(), "dated": 0})
         week = iso_week(row.get("published_at") or row.get("published") or row.get("date") or row.get("updated_at"))
-        if week:
-            entry["dated"] += 1
-            entry["weeks"].add(week)
+        lane = str(row.get("lane", "")).strip()
+        lanes = [lane]
+        alias = RESEARCH_LANE_ALIASES.get(lane)
+        if alias:
+            lanes.append(alias)
+        for lane_name in lanes:
+            entry = coverage.setdefault(lane_name, {"weeks": set(), "dated": 0})
+            if week:
+                entry["dated"] += 1
+                entry["weeks"].add(week)
     return {
         lane: {"dated": entry["dated"], "weeks": sorted(entry["weeks"])}
         for lane, entry in coverage.items()
@@ -919,8 +1061,11 @@ def check_read_report_quality(reviews_dir: Path, requirements: dict[str, str], p
             reports[candidate_id] = {"kind": kind, "path": None, "word_count": 0, "evidence_ref_count": 0}
             continue
         text = path.read_text(encoding="utf-8")
+        # Sections that mention the renderer in their heading are gate-padding, not
+        # inspection evidence; exclude them from every quality count.
+        text = re.sub(r"(?ims)^#{1,6}[^\n]*renderer[^\n]*$.*?(?=^#{1,6} |\Z)", "", text)
         word_count = len(re.findall(r"\b[\w'-]+\b", text))
-        evidence_ref_count = len(re.findall(r"`[^`]+:\d+`", text))
+        evidence_ref_count = len(re.findall(r"`[^`]+:\d+(?:-\d+)?`", text))
         min_words = RESEARCH_MIN_DEEP_REPORT_WORDS if kind == "deep_dive" else RESEARCH_MIN_SKIM_REPORT_WORDS
         min_refs = RESEARCH_MIN_DEEP_REPORT_REFS if kind == "deep_dive" else RESEARCH_MIN_SKIM_REPORT_REFS
         report = {
@@ -1009,6 +1154,7 @@ def render_mermaid_blocks(source: Path, rendered: Path, diagrams_dir: Path) -> d
     count = 0
     diagram_paths: list[str] = []
     diagram_reports: list[dict[str, Any]] = []
+    seen_sources: dict[str, int] = {}
     config = write_mermaid_config(diagrams_dir)
 
     def replace(match: re.Match[str]) -> str:
@@ -1018,6 +1164,13 @@ def render_mermaid_blocks(source: Path, rendered: Path, diagrams_dir: Path) -> d
         mmd = diagrams_dir / f"{stem}.mmd"
         diagram = diagrams_dir / f"{stem}.png"
         source_text = match.group(1).strip()
+        normalized = re.sub(r"\s+", " ", source_text)
+        if normalized in seen_sources:
+            raise RuntimeError(
+                f"Mermaid diagram {count} is identical to diagram {seen_sources[normalized]}; each diagram must "
+                "depict its own source's mechanism with that source's component names"
+            )
+        seen_sources[normalized] = count
         quality = inspect_mermaid_source(source_text)
         report = {"path": str(mmd), **quality}
         diagram_reports.append(report)
@@ -1045,22 +1198,34 @@ def render_mermaid_blocks(source: Path, rendered: Path, diagrams_dir: Path) -> d
         )
         if result["returncode"] != 0:
             raise RuntimeError(result["stderr"] or result["stdout"] or "mmdc failed")
-        width_px, _height_px = png_dimensions(diagram)
+        width_px, height_px = png_dimensions(diagram)
         natural_in = width_px / MERMAID_SCALE / 96.0
-        embed_in = min(natural_in, CONTENT_WIDTH_IN) if natural_in > 0 else CONTENT_WIDTH_IN
-        label_pt = MERMAID_NATURAL_LABEL_PT * (embed_in / natural_in if natural_in > 0 else 1.0)
+        natural_height_in = height_px / MERMAID_SCALE / 96.0
+        scale = 1.0
+        if natural_in > 0:
+            scale = min(scale, CONTENT_WIDTH_IN / natural_in)
+        if natural_height_in > 0:
+            scale = min(scale, MAX_DIAGRAM_EMBED_HEIGHT_IN / natural_height_in)
+        embed_in = natural_in * scale if natural_in > 0 else CONTENT_WIDTH_IN
+        label_pt = MERMAID_NATURAL_LABEL_PT * scale
         report["natural_width_in"] = round(natural_in, 2)
+        report["natural_height_in"] = round(natural_height_in, 2)
         report["embed_width_in"] = round(embed_in, 2)
         report["effective_label_pt"] = round(label_pt, 1)
         if label_pt < MIN_DIAGRAM_LABEL_PT:
             raise RuntimeError(
-                f"Mermaid diagram {count} is too wide to stay legible: at page width its labels shrink to "
-                f"~{label_pt:.1f}pt (minimum {MIN_DIAGRAM_LABEL_PT:.0f}pt). Re-orient the flowchart top-down "
-                "(`graph TD`), split it into two smaller diagrams, or shorten node labels."
+                f"Mermaid diagram {count} is too large to stay legible: fitted to the page "
+                f"({natural_in:.1f}x{natural_height_in:.1f}in natural) its labels shrink to "
+                f"~{label_pt:.1f}pt (minimum {MIN_DIAGRAM_LABEL_PT:.0f}pt). Split it into smaller diagrams, "
+                "re-orient it, or shorten node labels."
             )
         diagram_paths.append(str(diagram))
         rel = diagram.relative_to(rendered.parent).as_posix()
-        return f"\n![DeepBrief mechanism diagram {count}]({rel}){{width={embed_in:.2f}in}}\n"
+        headings = re.findall(r"^#{1,2} (?!#)(.+?)\s*$", text[: match.start()], flags=re.MULTILINE)
+        context = re.sub(r"[#`*_\[\]()]+", "", headings[-1]).strip() if headings else "this brief"
+        if len(context) > 70:
+            context = context[:70].rsplit(" ", 1)[0].rstrip(".,:;") + "…"
+        return f"\n![Mechanism diagram for {context}]({rel}){{width={embed_in:.2f}in}}\n"
 
     converted = re.sub(r"```mermaid\s*\n(.*?)```", replace, text, flags=re.DOTALL)
     converted = normalize_source_code_fences(converted)

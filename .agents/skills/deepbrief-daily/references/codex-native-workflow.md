@@ -118,7 +118,10 @@ For monthly runs with many read reports, do not feed every read report into the 
    - If a selected source lacks a public URL, either resolve the canonical URL before synthesis or mark the item in Errata as degraded and avoid material claims from it.
 
 10. **Compose**
+   - Author all prose yourself or via composer subagents, working from the lane syntheses and read reports on disk. Never generate deep-dive, skim-card, or section prose from a script template or format loop; scripts may only concatenate already-authored Markdown. The renderer rejects duplicated blocks, repeated boilerplate sentences, and dive pairs that share sentences.
+   - On large runs, draft incrementally so the work survives context compaction: write each deep dive to `drafts/deep-dive-<nn>-<item-id>.md` from its read report and lane synthesis (one composer subagent per dive is the preferred shape for 8+ dives), write skims per lane to `drafts/skims-<lane>.md`, then assemble `brief.md` from the drafts.
    - Write `brief.md` in the fixed order from `references/brief-contract.md`.
+   - Make every dive's diagram source-specific: node labels must name that source's actual components from its read report, and no two dives may share a diagram or snippet.
    - Include at least one explanatory diagram and at least one visual asset. Prefer a real source figure or screenshot when available and permitted; if none is available, document that in Errata and use an original diagram based on verified evidence.
    - Paper deep dives must embed at least one real figure cropped from the locally saved PDF. Produce it deterministically, for example `pdftoppm -png -r 200 -f <page> -l <page> sources/papers/<paper>.pdf images/<paper>-p<page>` followed by a crop, and write a caption that says what the reader should see in it. A Mermaid diagram is the fallback, not the default, and using the fallback requires an Errata note explaining why no source figure was usable.
    - Crop or annotate paper screenshots before using them. A full paper page, formula dump, or unreadable screenshot is not a good reader visual.
@@ -190,6 +193,24 @@ Write <artifact-dir>/reviews/synthesis/<lane>.md with: the lane's 3-5 themes for
 month; the strongest items with citation-ready evidence pointers into the read
 reports; cross-item connections; and which full reports the composer should open.
 Do not introduce claims that are not in the read reports.
+```
+
+### Deep-dive composer subagent
+
+```text
+You are a DeepBrief composer subagent for deep dive <nn>: <item-id> (<title>).
+Read from disk: <artifact-dir>/reviews/subagents/read-<item-id>.md, the lane synthesis
+<artifact-dir>/reviews/synthesis/<lane>.md, and the citation registry entry for this
+source (citation number <n>, supporting numbers <list>).
+Write <artifact-dir>/drafts/deep-dive-<nn>-<item-id>.md: one `## <theme>: <full title>`
+section in the exact monthly schema (### TL;DR through ### Sources & citations).
+Every paragraph, the mechanism-trace diagram, the evidence-map claims, the
+implementation snippet, the experiment, and the open questions must come from this
+source's read report — name its actual components, files, stages, metrics, and
+limitations. Mermaid node labels must use this source's own terms. Use inline public
+citation links like [<n>](#source-<n>) next to material claims; never local paths.
+Do not reuse wording, diagrams, or snippets from any other dive; generic
+evidence-pipeline boilerplate will be rejected by the renderer.
 ```
 
 ## Output Contract
