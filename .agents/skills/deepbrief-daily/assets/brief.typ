@@ -48,6 +48,10 @@
   #text(size: 8.5pt, fill: muted, style: "italic")[#it]
 ]
 
+// Float image figures to the top/bottom of the page so a figure that does not
+// fit the remaining space lets text backfill instead of leaving the page half blank.
+#show figure.where(kind: image): set figure(placement: auto)
+
 #show raw.where(block: false): it => box(
   fill: code-bg,
   inset: (x: 2.2pt, y: 0.8pt),

@@ -35,6 +35,12 @@ These guardrails override any softer wording elsewhere in this skill.
 - If app concurrency is capped, spawn the source-specific subagents in waves until the requested count is met. Record wave size, completed agent ids, timeouts, and failures in `reviews/fanout-report.md`.
 - If the requested number of subagents cannot be spawned, stop before synthesis or rendering and ask the user whether to approve a degraded run. Do not silently satisfy the gate with local scripts.
 
+## Output Contract Precedence
+
+- When the user adapts this skill to a different deliverable (course-note book, report, handbook) and supplies an explicit output structure, the user's structure is the contract. Use the matching renderer profile (`--profile course_book` for per-lecture course books, per `references/brief-contract.md` > Course Book Contract).
+- If no renderer profile matches the user's required structure, stop before composition and ask the user how to proceed. Do not reshape the deliverable into the daily/monthly brief schema to satisfy the renderer; a brief-shaped document that drops the user's required sections is a failed run even if the renderer reports `status: ok`.
+- Pass coverage expectations to the renderer when the user enumerates them (for example `--expect-lectures 26 --expect-discussions 11`) so missing or merged sections block rendering instead of shipping.
+
 ## Hard Composition Guardrails
 
 - Author all final prose and diagrams from the read reports and lane syntheses, in-session or via composer subagents. Never generate deep-dive, skim-card, or section prose from string templates or scripts; scripts may only concatenate already-authored Markdown. The renderer rejects duplicated blocks, repeated sentences, and dive pairs that share sentences.
@@ -42,6 +48,7 @@ These guardrails override any softer wording elsewhere in this skill.
 - On large runs, draft each deep dive to `drafts/deep-dive-<nn>-<item-id>.md` right after lane synthesis, then assemble `brief.md` from the drafts. After context compaction, re-read drafts and syntheses from disk instead of reconstructing from memory.
 - Never edit `scripts/render_brief.py`, `assets/brief.typ`, or gate thresholds during a run to make a failing gate pass. If a gate seems wrong for the run shape, stop and ask the user.
 - Never pad read reports or audit artifacts to satisfy count gates; the renderer ignores report sections whose heading mentions the renderer.
+- Authored prose must exist on disk as Markdown (under `drafts/`, `reviews/`, or `reviews/synthesis/`) before any assembly script runs. Embedding section prose, composer reports, or audit reports as string literals inside a script and executing it violates the no-template rule even when the embedded text was model-written: it destroys the audit trail (the "reports" postdate the script) and bypasses the draft-first compaction safety in this skill. Audit artifacts like `composition-report.md` and `fanout-report.md` must be written directly by the agent that did the work, never emitted by the assembly script.
 
 ## Required Reads
 

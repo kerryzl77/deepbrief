@@ -274,3 +274,41 @@ Write each entry as a heading with an explicit attribute so the anchor survives 
 ```
 
 Raw HTML anchors like `<a id="source-3"></a>` are dropped during conversion and the renderer rejects them.
+
+## Course Book Contract
+
+Apply this section when the user asks for a course-note book, lecture-note book, or any run whose deliverable is per-lecture teaching notes rather than a news brief. This contract overrides the daily and monthly structures entirely; do not coerce course content into the brief schemas. The renderer detects the profile from `# How to Use This Book` or `# Verification Appendix`, or pass `--profile course_book`.
+
+### Required Order
+
+1. Front matter (YAML metadata block; renders as the title page).
+2. `# How to Use This Book`
+3. `# Course Map`
+4. `# Prerequisite Crash Course`
+5. Unit chapters containing per-lecture and per-discussion sections.
+6. `# Cheat Sheets`
+7. `# Glossary`
+8. `# Exam-Style Review`
+9. `# Citation Appendix`
+10. `# Verification Appendix`
+
+### Lecture and Discussion Sections
+
+- Every lecture gets its own heading matching `## Lecture <N>: <title>` (level 1-3). The renderer rejects duplicate lecture numbers, and with `--expect-lectures N` it rejects any missing lecture 1..N.
+- Every discussion gets its own heading matching `## Discussion <id>`. With `--expect-discussions M` the renderer requires at least M distinct discussion sections.
+- Each lecture section must contain, recognizably: learning goals, key terms, a full explanation, worked examples, common mistakes, self-check questions, and source citations. The renderer keyword-checks these per lecture section.
+- Write each lecture section from that lecture's own subagent read report. Distinctness rules from the monthly contract still apply: no shared diagrams, no repeated sentences, no template-stamped captions.
+- Page bounds are 60-400; a course book is long by design. Never compress lectures into merged "deep dives" to fit a brief page budget.
+
+### Invocation
+
+```bash
+python scripts/render_brief.py --input <dir>/brief.md --out <dir> \
+  --profile course_book --expect-lectures <N> --expect-discussions <M>
+```
+
+Applied-AI candidate-lane minimums and fanout-lane checks are skipped for this profile; label candidates with honest course lanes (lectures, discussions, transcripts, exams, projects) instead of forcing them into news lanes.
+
+### Precedence Rule
+
+When the user's prompt specifies an explicit output structure that conflicts with every renderer profile, stop and ask the user before composing — never silently reshape the deliverable to satisfy the renderer. A renderable wrong document is a failed run.

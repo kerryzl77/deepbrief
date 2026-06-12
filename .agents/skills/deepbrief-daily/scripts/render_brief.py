@@ -38,7 +38,7 @@ MERMAID_SYNTAX_TOKENS = {"flowchart", "graph", "subgraph", "end", "classdef", "s
 MONTHLY_MIN_LANE_WEEKS = 3
 MONTHLY_MIN_DEEP_DIVES = 2
 MONTHLY_MIN_DIVE_SOURCE_CITATIONS = 3
-PAGE_BOUNDS = {"daily": (8, 30), "monthly": (20, 40)}
+PAGE_BOUNDS = {"daily": (8, 30), "monthly": (20, 40), "course_book": (60, 400)}
 CONTENT_WIDTH_IN = 7.0
 MERMAID_SCALE = 2
 MERMAID_VIEWPORT_PX = 4096
@@ -89,6 +89,30 @@ MONTHLY_MARKER_HEADINGS = (
     "# Monthly Themes",
     "# Month-Ahead Queue",
 )
+REQUIRED_HEADINGS_COURSE_BOOK = [
+    "# How to Use This Book",
+    "# Course Map",
+    "# Prerequisite Crash Course",
+    "# Cheat Sheets",
+    "# Glossary",
+    "# Exam-Style Review",
+    "# Citation Appendix",
+    "# Verification Appendix",
+]
+COURSE_BOOK_MARKER_HEADINGS = (
+    "# How to Use This Book",
+    "# Verification Appendix",
+)
+COURSE_LECTURE_HEADING_RE = re.compile(r"^#{1,3} Lecture (\d+)\b", re.MULTILINE)
+COURSE_DISCUSSION_HEADING_RE = re.compile(r"^#{1,3} Discussion ([0-9][\w.]*)\b", re.MULTILINE)
+COURSE_LECTURE_REQUIRED_ELEMENTS = [
+    "learning goal",
+    "key term",
+    "worked example",
+    "common mistake",
+    "self-check",
+    "source",
+]
 DEEPDIVE_HEADINGS = [
     "## TL;DR",
     "## Mental model",
@@ -155,9 +179,21 @@ def main() -> int:
     parser.add_argument("--template", help="Optional Typst template path.")
     parser.add_argument(
         "--profile",
-        choices=["auto", "daily", "monthly"],
+        choices=["auto", "daily", "monthly", "course_book"],
         default="auto",
-        help="Brief profile. 'auto' detects monthly briefs from their top-level headings.",
+        help="Brief profile. 'auto' detects monthly/course-book briefs from their top-level headings.",
+    )
+    parser.add_argument(
+        "--expect-lectures",
+        type=int,
+        default=None,
+        help="course_book only: require a dedicated section for every lecture 1..N.",
+    )
+    parser.add_argument(
+        "--expect-discussions",
+        type=int,
+        default=None,
+        help="course_book only: require at least N distinct discussion sections.",
     )
     parser.add_argument(
         "--min-pages", type=int, default=None, help="Minimum acceptable PDF pages; default 8 daily, 20 monthly."
@@ -190,7 +226,7 @@ def main() -> int:
     pdf_path = out_dir / "brief.pdf"
     diagrams_dir = out_dir / "diagrams"
 
-    lint = lint_markdown(source, profile)
+    lint = lint_markdown(source, profile, args.expect_lectures, args.expect_discussions)
     research = check_research_artifacts(out_dir, profile)
     tools = check_tools()
     research_blocking = bool(research["blocking_errors"]) and not args.allow_degraded_research
@@ -316,6 +352,8 @@ def skill_dir() -> Path:
 
 
 def detect_profile(text: str) -> str:
+    if any(heading in text for heading in COURSE_BOOK_MARKER_HEADINGS):
+        return "course_book"
     return "monthly" if any(heading in text for heading in MONTHLY_MARKER_HEADINGS) else "daily"
 
 
@@ -329,9 +367,19 @@ def default_metadata_args(source_text: str, profile: str, out_dir: Path) -> list
     return ["--metadata", f"title={title}", "--metadata", f"date={date_label}"]
 
 
-def lint_markdown(path: Path, profile: str) -> dict[str, Any]:
+def lint_markdown(
+    path: Path,
+    profile: str,
+    expect_lectures: int | None = None,
+    expect_discussions: int | None = None,
+) -> dict[str, Any]:
     text = path.read_text(encoding="utf-8")
-    required = REQUIRED_HEADINGS_MONTHLY if profile == "monthly" else REQUIRED_HEADINGS_DAILY
+    if profile == "monthly":
+        required = REQUIRED_HEADINGS_MONTHLY
+    elif profile == "course_book":
+        required = REQUIRED_HEADINGS_COURSE_BOOK
+    else:
+        required = REQUIRED_HEADINGS_DAILY
     missing = [heading for heading in required if heading not in text]
     errors: list[str] = []
     if missing:
@@ -339,6 +387,9 @@ def lint_markdown(path: Path, profile: str) -> dict[str, Any]:
     if profile == "monthly":
         errors.extend(monthly_deepdive_errors(text))
         citations = sum(count_citation_lines(body) for body in sections_all(text, "### Sources & citations"))
+    elif profile == "course_book":
+        errors.extend(course_book_errors(text, expect_lectures, expect_discussions))
+        citations = count_citation_lines(top_level_section(text, "# Citation Appendix"))
     else:
         missing_deep = [heading for heading in DEEPDIVE_HEADINGS if heading not in text]
         if missing_deep:
@@ -394,6 +445,40 @@ def lint_markdown(path: Path, profile: str) -> dict[str, Any]:
         "weak_visual_warnings": weak_visuals,
         "template_redundancy": redundancy,
     }
+
+
+def course_book_errors(
+    text: str,
+    expect_lectures: int | None,
+    expect_discussions: int | None,
+) -> list[str]:
+    errors: list[str] = []
+    lecture_matches = list(COURSE_LECTURE_HEADING_RE.finditer(text))
+    lecture_numbers = [int(match.group(1)) for match in lecture_matches]
+    duplicates = sorted({number for number in lecture_numbers if lecture_numbers.count(number) > 1})
+    if duplicates:
+        errors.append(f"duplicate lecture sections for lectures: {duplicates}")
+    if expect_lectures is not None:
+        missing = [number for number in range(1, expect_lectures + 1) if number not in set(lecture_numbers)]
+        if missing:
+            errors.append(
+                f"course book has dedicated sections for {len(set(lecture_numbers))} of {expect_lectures} "
+                f"expected lectures; missing lecture sections: {missing}"
+            )
+    discussion_ids = {match.group(1) for match in COURSE_DISCUSSION_HEADING_RE.finditer(text)}
+    if expect_discussions is not None and len(discussion_ids) < expect_discussions:
+        errors.append(
+            f"course book has {len(discussion_ids)} distinct discussion sections, expected at least {expect_discussions}"
+        )
+    boundaries = [match.start() for match in lecture_matches] + [len(text)]
+    for index, match in enumerate(lecture_matches):
+        body = text[match.start() : boundaries[index + 1]].lower()
+        missing_elements = [element for element in COURSE_LECTURE_REQUIRED_ELEMENTS if element not in body]
+        if missing_elements:
+            errors.append(
+                f"lecture {match.group(1)} section is missing required elements: {missing_elements}"
+            )
+    return errors
 
 
 def count_citation_lines(text: str) -> int:
@@ -459,12 +544,21 @@ def inline_evidence_metrics(text: str, profile: str) -> dict[str, Any]:
     urls = URL_RE.findall(visible_body)
     level = "###" if profile == "monthly" else "##"
     key_counts: dict[str, int] = {}
-    for name in KEY_EVIDENCE_SECTIONS:
-        heading = f"{level} {name}"
-        merged = "\n".join(sections_all(text, heading))
-        key_counts[heading] = len(CITATION_LINK_RE.findall(strip_fenced_code(merged))) + len(
-            URL_RE.findall(strip_fenced_code(merged))
-        )
+    if profile == "course_book":
+        lecture_matches = list(COURSE_LECTURE_HEADING_RE.finditer(text))
+        boundaries = [match.start() for match in lecture_matches] + [len(text)]
+        for index, match in enumerate(lecture_matches):
+            section_text = strip_fenced_code(text[match.start() : boundaries[index + 1]])
+            key_counts[f"Lecture {match.group(1)} section"] = len(CITATION_LINK_RE.findall(section_text)) + len(
+                URL_RE.findall(section_text)
+            )
+    else:
+        for name in KEY_EVIDENCE_SECTIONS:
+            heading = f"{level} {name}"
+            merged = "\n".join(sections_all(text, heading))
+            key_counts[heading] = len(CITATION_LINK_RE.findall(strip_fenced_code(merged))) + len(
+                URL_RE.findall(strip_fenced_code(merged))
+            )
     paragraphs = material_paragraphs(visible_body)
     cited = [paragraph for paragraph in paragraphs if CITATION_LINK_RE.search(paragraph) or URL_RE.search(paragraph)]
     ratio = (len(cited) / len(paragraphs)) if paragraphs else 1.0
@@ -815,9 +909,14 @@ def check_research_artifacts(output_dir: Path, profile: str) -> dict[str, Any]:
         errors.append(
             f"candidate log has {len(distinct_candidates)} distinct candidates, expected at least {RESEARCH_MIN_CANDIDATES}"
         )
-    for lane, minimum in RESEARCH_LANE_MINIMUMS.items():
-        if lane_counts.get(lane, 0) < minimum:
-            errors.append(f"candidate lane {lane!r} has {lane_counts.get(lane, 0)} candidates, expected at least {minimum}")
+    if profile != "course_book":
+        # Applied-AI lane quotas are meaningless for a course corpus; forcing them
+        # invites mislabeled lanes in candidates.jsonl instead of better research.
+        for lane, minimum in RESEARCH_LANE_MINIMUMS.items():
+            if lane_counts.get(lane, 0) < minimum:
+                errors.append(
+                    f"candidate lane {lane!r} has {lane_counts.get(lane, 0)} candidates, expected at least {minimum}"
+                )
     for source_id, count in sorted(source_concentration.items(), key=lambda item: -item[1]):
         if count > MAX_CANDIDATES_PER_SOURCE_ID:
             warnings.append(
@@ -861,7 +960,7 @@ def check_research_artifacts(output_dir: Path, profile: str) -> dict[str, Any]:
             f"{len(fanout_detail_reports)} raw fanout/subagent detail reports, expected at least "
             f"{RESEARCH_MIN_FANOUT_DETAIL_REPORTS} under reviews/fanout/ or reviews/subagents/"
         )
-    if missing_fanout_lanes:
+    if missing_fanout_lanes and profile != "course_book":
         errors.append(f"missing raw fanout detail reports for lanes: {missing_fanout_lanes}")
     if len(read_reports) < RESEARCH_MIN_READ_REPORTS:
         errors.append(
@@ -1163,7 +1262,8 @@ def render_mermaid_blocks(source: Path, rendered: Path, diagrams_dir: Path) -> d
         stem = f"diagram_{count:02d}"
         mmd = diagrams_dir / f"{stem}.mmd"
         diagram = diagrams_dir / f"{stem}.png"
-        source_text = match.group(1).strip()
+        caption_attr = re.search(r'caption="([^"]+)"', match.group(1))
+        source_text = match.group(2).strip()
         normalized = re.sub(r"\s+", " ", source_text)
         if normalized in seen_sources:
             raise RuntimeError(
@@ -1221,13 +1321,17 @@ def render_mermaid_blocks(source: Path, rendered: Path, diagrams_dir: Path) -> d
             )
         diagram_paths.append(str(diagram))
         rel = diagram.relative_to(rendered.parent).as_posix()
-        headings = re.findall(r"^#{1,2} (?!#)(.+?)\s*$", text[: match.start()], flags=re.MULTILINE)
-        context = re.sub(r"[#`*_\[\]()]+", "", headings[-1]).strip() if headings else "this brief"
-        if len(context) > 70:
-            context = context[:70].rsplit(" ", 1)[0].rstrip(".,:;") + "…"
-        return f"\n![Mechanism diagram for {context}]({rel}){{width={embed_in:.2f}in}}\n"
+        if caption_attr:
+            caption = caption_attr.group(1).strip()
+        else:
+            headings = re.findall(r"^#{1,2} (?!#)(.+?)\s*$", text[: match.start()], flags=re.MULTILINE)
+            context = re.sub(r"[#`*_\[\]()]+", "", headings[-1]).strip() if headings else "this brief"
+            if len(context) > 70:
+                context = context[:70].rsplit(" ", 1)[0].rstrip(".,:;") + "…"
+            caption = f"Mechanism diagram for {context}"
+        return f"\n![{caption}]({rel}){{width={embed_in:.2f}in}}\n"
 
-    converted = re.sub(r"```mermaid\s*\n(.*?)```", replace, text, flags=re.DOTALL)
+    converted = re.sub(r"```mermaid([^\S\n][^\n]*|)\n(.*?)```", replace, text, flags=re.DOTALL)
     converted = normalize_source_code_fences(converted)
     rendered.write_text(converted, encoding="utf-8")
     return {"count": count, "diagram_paths": diagram_paths, "reports": diagram_reports}
@@ -1322,10 +1426,15 @@ def post_checks(
         for error in report.get("blocking_errors", [])
     ]
     generic_diagram_caption = bool(re.search(r"Mermaid diagram\s+\d+", text, flags=re.I))
-    expected_headings_present = all(
-        heading.replace("## ", "") in text for heading in ["## Mechanism trace", "## Evidence map", "## Implementation notes"]
-    )
-    if profile == "monthly":
+    if profile == "course_book":
+        expected_headings_present = all(
+            heading in text for heading in ["How to Use This Book", "Glossary", "Citation Appendix"]
+        )
+    else:
+        expected_headings_present = all(
+            heading.replace("## ", "") in text for heading in ["## Mechanism trace", "## Evidence map", "## Implementation notes"]
+        )
+    if profile in ("monthly", "course_book"):
         math_ok = not re.search(r"\\(frac|cdot|times|operatorname|mathbf|sum)\b", text)
     else:
         math_ok = "0.55" in text and "0.25" in text and "0.20" in text
