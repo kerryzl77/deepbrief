@@ -650,9 +650,16 @@ def check_research_artifacts(output_dir: Path, profile: str) -> dict[str, Any]:
         if str(row.get("status", "")).lower() in {"degraded", "blocked", "failed"}
     ]
     read_reports = sorted(
-        path
-        for path in reviews_dir.glob("*.md")
-        if path.name != "fanout-report.md" and path.is_file() and path.stat().st_size > 0
+        set(
+            path
+            for path in reviews_dir.glob("*.md")
+            if path.name != "fanout-report.md" and path.is_file() and path.stat().st_size > 0
+        )
+        | set(
+            path
+            for path in (reviews_dir / "subagents").glob("read-*.md")
+            if path.is_file() and path.stat().st_size > 0
+        )
     )
     fanout_detail_reports = sorted((reviews_dir / "fanout").glob("*.md")) + sorted(
         (reviews_dir / "subagents").glob("*.md")
