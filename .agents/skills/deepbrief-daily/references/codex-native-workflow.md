@@ -18,7 +18,7 @@ This is a long-running research workflow. Do not stop after a small set of conve
 - Preserve one local artifact for every selected item.
 - Deep-read selected items before drafting.
 - Record actual subagent fan-out when the user asks for subagents, parallel agents, one-agent-per-source work, or monthly/high-recall gates.
-- Tie material claims to local evidence.
+- Tie material claims to local evidence internally and to public citation links in the final PDF.
 - Produce a designed, readable PDF, not just a mechanically valid PDF.
 
 If a sandbox, network policy, source outage, auth wall, or Codex app limit prevents a gate, document the exact limit and ask for explicit approval before rendering a degraded PDF.
@@ -91,25 +91,33 @@ Deterministic scripts may fetch, dedupe, count, render, and perform mechanical c
    - Write `verification/evidence-matrix.md` or `verification/evidence-matrix.jsonl`.
    - Code: mechanically verify every cited `file:line` and at least 90 percent of symbols with `rg`, `git grep`, `sed -n`, or equivalent read-only commands.
    - Article/paper: verify quoted claims against saved PDF/full text, source pages, or local extracts.
-   - Verify that each final body paragraph with a source-specific claim has a nearby local evidence reference or URL.
+   - Verify that each material claim maps to local evidence in the evidence matrix.
    - A source cannot be labeled `Verified` unless its local artifact exists and the evidence matrix references it.
    - Strike unsupported claims or move them to Errata.
 
-9. **Compose**
+9. **Build the citation registry**
+   - Resolve every local evidence ref used for material claims through `sources/manifest.jsonl`, `sources/selected-candidates.jsonl`, and `sources/candidates.jsonl`.
+   - Assign one stable citation number per distinct public source URL or canonical source identity. Reuse that number for multiple local line refs from the same source.
+   - Persist the audit bridge in `verification/evidence-matrix.*`: claim, local artifact path, exact local line/page/section, citation number, public title, and public URL.
+   - Do not use `verification/excerpts/*`, `sources/raw/*`, `sources/papers/*`, `repos/*`, or `reviews/*` paths as reader-facing citations in `brief.md`.
+   - If a selected source lacks a public URL, either resolve the canonical URL before synthesis or mark the item in Errata as degraded and avoid material claims from it.
+
+10. **Compose**
    - Write `brief.md` in the fixed order from `references/brief-contract.md`.
    - Include at least one explanatory diagram and at least one visual asset. Prefer a real source figure or screenshot when available and permitted; if none is available, document that in Errata and use an original diagram based on verified evidence.
    - Crop or annotate paper screenshots before using them. A full paper page, formula dump, or unreadable screenshot is not a good reader visual.
    - Use inline code formatting for symbols, file paths, config keys, API fields, and model/release identifiers.
    - Keep code blocks short. Long blocks require a real source path in the fence info string, such as ````python source="repos/pkg/file.py"```` or ````text derived_from="sources/papers/example.txt:120"````.
+   - Use inline citation links like `[1](#source-1)` next to material claims. Put public title and URL entries in `# Citation Appendix`.
    - Include `Pipeline Report`, `Tomorrow's Queue`, and `Errata`.
    - The Markdown must be final prose, not notes or TODOs.
 
-10. **Feedback file**
+11. **Feedback file**
    - Write `feedback.md` next to `brief.md` before rendering.
    - Include one block per selected item and a global `## What to change` section.
    - Include an A/B slot only when a real comparison was included in the PDF.
 
-11. **Render and QA**
+12. **Render and QA**
    - Run `python <skill>/scripts/render_brief.py --input brief.md --out <artifact-dir>`.
    - Fix research-gate, lint, citation, layout, diagram, and PDF failures until the renderer reports `status: ok`.
    - Visually inspect representative rendered pages: cover/stats, deep-dive mechanism, diagram/visual page, skim page, and pipeline page. If any page is dense, illegible, or unstyled, revise content/template rather than accepting mechanical success.

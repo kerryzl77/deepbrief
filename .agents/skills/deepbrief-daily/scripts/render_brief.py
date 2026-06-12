@@ -21,8 +21,9 @@ RESEARCH_MIN_DEEP_REPORT_WORDS = 1000
 RESEARCH_MIN_SKIM_REPORT_REFS = 3
 RESEARCH_MIN_DEEP_REPORT_REFS = 10
 MIN_SOURCE_SECTION_CITATIONS = 5
-MIN_INLINE_LOCAL_REFS = 8
+MIN_INLINE_CITATION_LINKS = 8
 MIN_INLINE_TOTAL_REFS = 14
+MIN_CITATION_APPENDIX_ENTRIES = 5
 MIN_CITED_PARAGRAPH_RATIO = 0.55
 MAX_UNSOURCED_CODE_BLOCK_LINES = 24
 RESEARCH_LANE_MINIMUMS = {
@@ -41,6 +42,7 @@ REQUIRED_HEADINGS = [
     "# Pipeline Report",
     "# Tomorrow's Queue",
     "# Errata",
+    "# Citation Appendix",
 ]
 DEEPDIVE_HEADINGS = [
     "## TL;DR",
@@ -55,6 +57,11 @@ DEEPDIVE_HEADINGS = [
     "## Sources & citations",
 ]
 SOURCE_REF_RE = re.compile(r"`[^`\n]+:\d+(?:-\d+)?`")
+CITATION_LINK_RE = re.compile(r"\[(?P<num>\d+)\]\(#(?P<prefix>source|citation)-(?P=num)\)")
+CITATION_TARGET_RE = re.compile(
+    r"(?:\{#(?:source|citation)-(?P<brace>\d+)\}|<a\s+id=[\"'](?:source|citation)-(?P<html>\d+)[\"']\s*></a>)",
+    re.IGNORECASE,
+)
 URL_RE = re.compile(r"https?://[^\s)>\]]+")
 LONG_CODE_SOURCE_RE = re.compile(r"\b(source|derived_from)=['\"][^'\"]+['\"]")
 ALLOWED_LONG_CODE_LANGS = {
@@ -196,11 +203,12 @@ def lint_markdown(path: Path) -> dict[str, Any]:
         [
             line
             for line in source_section.splitlines()
-            if "http://" in line or "https://" in line or SOURCE_REF_RE.search(line)
+            if "http://" in line or "https://" in line or CITATION_LINK_RE.search(line)
         ]
     )
     visual_refs = len(re.findall(r"!\[[^\]]*\]\([^)]+\)", text)) + len(re.findall(r"```mermaid\s+", text))
     inline = inline_evidence_metrics(text)
+    appendix = citation_appendix_metrics(text)
     code_blocks = check_code_blocks(text)
     weak_visuals = weak_visual_captions(text)
     errors = []
@@ -214,13 +222,20 @@ def lint_markdown(path: Path) -> dict[str, Any]:
         errors.append(f"sources section has {citations} citations, expected at least {MIN_SOURCE_SECTION_CITATIONS}")
     if visual_refs < 2:
         errors.append("brief must include at least one explanatory diagram and one visual asset")
-    if inline["local_ref_count"] < MIN_INLINE_LOCAL_REFS:
+    if inline["local_ref_count"] > 0:
         errors.append(
-            f"body has {inline['local_ref_count']} inline local evidence refs, expected at least {MIN_INLINE_LOCAL_REFS}"
+            "body exposes "
+            f"{inline['local_ref_count']} internal local evidence refs; use public citation links like [1](#source-1) "
+            "and keep local file:line refs in verification/evidence-matrix.*"
+        )
+    if inline["citation_link_count"] < MIN_INLINE_CITATION_LINKS:
+        errors.append(
+            f"body has {inline['citation_link_count']} public citation links, expected at least "
+            f"{MIN_INLINE_CITATION_LINKS}"
         )
     if inline["total_ref_count"] < MIN_INLINE_TOTAL_REFS:
         errors.append(
-            f"body has {inline['total_ref_count']} inline evidence refs/URLs, expected at least {MIN_INLINE_TOTAL_REFS}"
+            f"body has {inline['total_ref_count']} inline citation links/URLs, expected at least {MIN_INLINE_TOTAL_REFS}"
         )
     if inline["material_paragraph_count"] >= 8 and inline["cited_paragraph_ratio"] < MIN_CITED_PARAGRAPH_RATIO:
         errors.append(
@@ -230,12 +245,14 @@ def lint_markdown(path: Path) -> dict[str, Any]:
         )
     for heading, count in inline["key_section_ref_counts"].items():
         if count == 0:
-            errors.append(f"{heading} has no inline local evidence refs or source URLs")
+            errors.append(f"{heading} has no inline public citation links or source URLs")
+    errors.extend(appendix["blocking_errors"])
     errors.extend(code_blocks["blocking_errors"])
     errors.extend(weak_visuals)
     return {
         "blocking_errors": errors,
         "citation_count": citations,
+        "citation_appendix": appendix,
         "visual_refs": visual_refs,
         "inline_evidence": inline,
         "code_blocks": code_blocks["blocks"],
@@ -244,12 +261,11 @@ def lint_markdown(path: Path) -> dict[str, Any]:
 
 
 def inline_evidence_metrics(text: str) -> dict[str, Any]:
-    body = text
-    source_match = re.search(r"^## Sources & citations\s*$", body, flags=re.MULTILINE)
-    if source_match:
-        body = body[: source_match.start()]
-    local_refs = SOURCE_REF_RE.findall(body)
-    urls = URL_RE.findall(body)
+    body = before_top_level_section(text, "# Citation Appendix")
+    visible_body = strip_fenced_code(body)
+    local_refs = SOURCE_REF_RE.findall(visible_body)
+    citation_links = CITATION_LINK_RE.findall(visible_body)
+    urls = URL_RE.findall(visible_body)
     key_sections = [
         "## Why this matters now",
         "## Mechanism trace",
@@ -258,21 +274,86 @@ def inline_evidence_metrics(text: str) -> dict[str, Any]:
         "## Implementation notes",
     ]
     key_counts = {
-        heading: len(SOURCE_REF_RE.findall(section(text, heading))) + len(URL_RE.findall(section(text, heading)))
+        heading: len(CITATION_LINK_RE.findall(strip_fenced_code(section(text, heading))))
+        + len(URL_RE.findall(strip_fenced_code(section(text, heading))))
         for heading in key_sections
     }
-    paragraphs = material_paragraphs(body)
-    cited = [paragraph for paragraph in paragraphs if SOURCE_REF_RE.search(paragraph) or URL_RE.search(paragraph)]
+    paragraphs = material_paragraphs(visible_body)
+    cited = [paragraph for paragraph in paragraphs if CITATION_LINK_RE.search(paragraph) or URL_RE.search(paragraph)]
     ratio = (len(cited) / len(paragraphs)) if paragraphs else 1.0
     return {
         "local_ref_count": len(local_refs),
+        "citation_link_count": len(citation_links),
         "url_count": len(urls),
-        "total_ref_count": len(local_refs) + len(urls),
+        "total_ref_count": len(citation_links) + len(urls),
         "material_paragraph_count": len(paragraphs),
         "cited_paragraph_count": len(cited),
         "cited_paragraph_ratio": ratio,
         "key_section_ref_counts": key_counts,
     }
+
+
+def citation_appendix_metrics(text: str) -> dict[str, Any]:
+    body = before_top_level_section(text, "# Citation Appendix")
+    appendix = top_level_section(text, "# Citation Appendix")
+    errors: list[str] = []
+    used_ids = citation_ids(body)
+    target_ids = citation_target_ids(appendix)
+    urls = URL_RE.findall(appendix)
+
+    if not appendix.strip():
+        errors.append("missing # Citation Appendix with public title and URL entries")
+    if len(target_ids) < MIN_CITATION_APPENDIX_ENTRIES:
+        errors.append(
+            f"citation appendix has {len(target_ids)} anchored entries, expected at least "
+            f"{MIN_CITATION_APPENDIX_ENTRIES}"
+        )
+    if len(urls) < len(target_ids):
+        errors.append(
+            f"citation appendix has {len(target_ids)} anchored entries but only {len(urls)} public URLs"
+        )
+    missing_targets = sorted(used_ids - target_ids, key=int)
+    if missing_targets:
+        errors.append(f"citation links missing appendix targets: {missing_targets}")
+
+    return {
+        "blocking_errors": errors,
+        "used_ids": sorted(used_ids, key=int),
+        "target_ids": sorted(target_ids, key=int),
+        "entry_count": len(target_ids),
+        "url_count": len(urls),
+    }
+
+
+def citation_ids(text: str) -> set[str]:
+    return {match.group("num") for match in CITATION_LINK_RE.finditer(strip_fenced_code(text))}
+
+
+def citation_target_ids(text: str) -> set[str]:
+    ids: set[str] = set()
+    for match in CITATION_TARGET_RE.finditer(strip_fenced_code(text)):
+        value = match.group("brace") or match.group("html")
+        if value:
+            ids.add(value)
+    return ids
+
+
+def strip_fenced_code(text: str) -> str:
+    return re.sub(r"^```.*?^```", "", text, flags=re.DOTALL | re.MULTILINE)
+
+
+def before_top_level_section(markdown: str, heading: str) -> str:
+    match = re.search(rf"^{re.escape(heading)}\s*$", markdown, flags=re.MULTILINE)
+    return markdown[: match.start()] if match else markdown
+
+
+def top_level_section(markdown: str, heading: str) -> str:
+    match = re.search(rf"^{re.escape(heading)}\s*$", markdown, flags=re.MULTILINE)
+    if not match:
+        return ""
+    rest = markdown[match.end() :]
+    next_heading = re.search(r"^# (?!#)", rest, flags=re.MULTILINE)
+    return rest[: next_heading.start()] if next_heading else rest
 
 
 def material_paragraphs(text: str) -> list[str]:
@@ -648,8 +729,9 @@ def section(markdown: str, heading: str) -> str:
     match = re.search(rf"^{re.escape(heading)}\s*$", markdown, flags=re.MULTILINE)
     if not match:
         return ""
+    level = len(heading) - len(heading.lstrip("#"))
     rest = markdown[match.end() :]
-    next_heading = re.search(r"^## ", rest, flags=re.MULTILINE)
+    next_heading = re.search(rf"^#{{1,{level}}} ", rest, flags=re.MULTILINE)
     return rest[: next_heading.start()] if next_heading else rest
 
 

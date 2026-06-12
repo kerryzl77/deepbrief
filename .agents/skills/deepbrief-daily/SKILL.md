@@ -16,6 +16,7 @@ Run DeepBrief as a second implementation inside Codex. The existing Python repos
 - Use explicit subagent fan-out when the user asks for subagents, parallel agents, one-agent-per-source work, or uses this skill's default prompt. If subagents are capped, run them in waves and record the limit. If subagent tools are unavailable, stop before synthesis and ask for explicit approval to continue without them.
 - Do not run the legacy DeepBrief Python engine unless the user explicitly opts into Anthropic-backed execution.
 - Treat `status: ok` from the renderer as necessary but not sufficient. The PDF must be readable, evidence-linked, visually legible, and useful as a daily learning artifact.
+- Keep local `file:line` evidence in read reports and `verification/evidence-matrix.*`; final PDF prose must use public citation links like `[1](#source-1)` that resolve to a title and raw source URL in `# Citation Appendix`.
 
 ## Codex-Native Boundary
 
@@ -76,7 +77,7 @@ Do not render a production PDF unless these gates pass, or the user explicitly a
 - Read reports must be substantive enough to prove inspection. Deep-dive reports should include an artifact inventory, full-document or full-diff map, mechanism summary, figure/table or file inventory, limitations, exact local evidence references, and open questions. Skim reports should include mechanism, why it matters, limitations, and exact local evidence references.
 - `verification/evidence-matrix.*` maps each material claim to a local artifact path and exact evidence location.
 - A source cannot be labeled `Verified` unless its raw local artifact exists and is referenced in the evidence matrix.
-- Body paragraphs in `brief.md` carry inline local evidence references or source links near the claims they support.
+- Body paragraphs in `brief.md` carry inline public citation links or raw source URLs near the claims they support. Do not expose internal local evidence refs in final prose.
 - Visuals are readable and purposeful: no empty-looking Mermaid, generic diagram captions, or unannotated full-page paper screenshots as the main visual.
 
 ## Rendering

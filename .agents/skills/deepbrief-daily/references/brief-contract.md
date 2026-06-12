@@ -13,6 +13,7 @@ Use this file when writing `brief.md`.
 7. Pipeline Report.
 8. Tomorrow's Queue.
 9. Errata.
+10. Citation Appendix.
 
 ## Cover Requirements
 
@@ -55,18 +56,40 @@ Rules:
 - `TL;DR`: at most five bullets.
 - `Why this matters now`: explain the operational impact in 2-4 paragraphs, with inline citations for material claims.
 - `Mechanism trace`: explain the actual system, benchmark, workflow, or paper mechanism as a staged flow. Include one readable diagram or compact table when it clarifies the flow.
-- `Evidence map`: include a table that maps key claims to local artifacts and exact evidence references.
+- `Evidence map`: include a table that maps key claims to reader-facing citation numbers. Keep local artifact paths and exact evidence references in `verification/evidence-matrix.*`, not in the final PDF prose.
 - `Walkthrough`: for code/repo targets, start with worktree shape, then trace entry points, state/data flow, security or approval boundaries, tests, and exact files. For papers/articles, trace local artifact inventory, central claim, method or eval setup, results, limits, and how to adapt it.
 - `Implementation notes`: include real code, config, prompt, API payload, or diff snippets only when they come from inspected artifacts. Do not include a long pseudocode block just to satisfy format.
-- `Sources & citations`: include a compact bibliography, but body paragraphs must already carry inline local references or source links.
+- `Sources & citations`: include the compact citation numbers used by the deep dive. Full title and URL entries belong in the final `Citation Appendix`, and body paragraphs must already carry inline public citation links.
 - Include one explanatory diagram and one visual asset. A poor full-page paper screenshot does not qualify unless it is cropped or annotated and explained in the caption.
 - Do not use a `## Pseudocode` heading in production briefs. Long pseudocode is allowed only when the source itself is an algorithmic artifact and the block is labeled with a `source=` or `derived_from=` fence attribute.
 
 Inline evidence:
 
 - Put an inline citation after every material claim, metric, release detail, or source-specific interpretation.
-- Prefer local evidence refs such as `sources/papers/example.txt:123`, `repos/pkg/file.ts:45`, or `reviews/item.md:12`. Use source URLs when a local line reference is not available.
+- In final `brief.md` prose, use reader-facing Markdown citation links such as `[1](#source-1)` or `[2](#source-2)`. Multiple supporting sources should appear as adjacent links, for example `[1](#source-1) [2](#source-2)`.
+- Do not expose internal audit paths such as `verification/excerpts/example.txt:12`, `sources/raw/example.txt:34`, `repos/example.patch:56`, or `reviews/item.md:78` in the reader-facing PDF. Those local refs belong in read reports and `verification/evidence-matrix.*`.
+- When a claim depends on exact local line evidence, map that line evidence to a public citation number through the evidence matrix and citation registry before composing final prose.
 - Do not move all citations to the end of a section. End citations are a bibliography, not evidence for the prose.
+
+## Citation Appendix
+
+Add a final top-level section:
+
+```md
+# Citation Appendix
+
+## Source 1: <title> {#source-1}
+
+- URL: <raw public source URL>
+- Type: <paper | repo_commit | technical_doc | discourse_lead | other>
+```
+
+Rules:
+
+- Assign one stable citation number per distinct public source URL or canonical source identity. Reuse the same number for multiple line-level evidence refs from the same source.
+- Each appendix entry must include the public title and raw public URL, such as an arXiv URL, GitHub commit/PR/repo URL, company blog URL, benchmark page, paper project page, or original discourse URL.
+- If a public URL is unavailable for a selected source, put the item in Errata and do not use it for material claims unless the user explicitly approves the degraded citation.
+- The appendix is reader-facing. Do not fill it with local artifact paths, read-report paths, or `verification/excerpts/*` refs.
 
 ## Skim Cards
 
