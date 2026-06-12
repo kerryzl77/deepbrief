@@ -66,6 +66,13 @@ For a 1,000-source monthly run, discovery must be subagent-led:
 - A deterministic collector may normalize, dedupe, fetch, and merge candidates into `sources/candidates.jsonl`, but it cannot be the only evidence that a lane was searched when the user asked for subagents.
 - If an accessible X/blog/newsletter/podcast lane cannot meet the requested count, record the exact blocker and ask before backfilling or rendering. Do not silently replace it with low-signal HN rows or adjacent GitHub issues.
 
+Date-window coverage for monthly runs:
+
+- Slice every date-bounded query by week. One query per week of the window is the default; a single whole-window query both times out on paginated sources (arXiv) and collapses coverage onto the most recent items.
+- Record `published_at` for every candidate so week coverage is verifiable; the renderer warns when a lane's candidates span fewer than 3 ISO weeks of a monthly window.
+- Per-feed soft cap: take at most 15 candidates from any single `source_id`. After a high-value cluster's first members, additional items from the same feed need distinct implementation evidence to justify a slot.
+- If a lane cannot cover a week (outage, auth wall, no relevant items), say so explicitly in the lane report instead of letting the gap pass silently.
+
 ## Search And Fetch Procedure
 
 Use the most direct available tool in the current Codex session:

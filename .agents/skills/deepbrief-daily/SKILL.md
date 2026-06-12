@@ -44,6 +44,14 @@ Before generating a real brief, read these references:
 - `references/brief-contract.md` for exact PDF structure and quality gates.
 - `references/pipeline-map.md` only when comparing against the legacy repository.
 
+Also read the calibrated reader surfaces at the repository root and use them for ranking and composition:
+
+- `profile.md` for the reader's interest areas and penalties.
+- `preferences.md` for learned, dated preference bullets; recent entries win on conflict.
+- Before final rendering, judge the draft against the rubrics in `calibration/rubrics/` when that directory exists, and fix the weakest-scoring sections first.
+
+These files are inputs only. Do not write to `profile.md` or `preferences.md`; they are maintained by the separate calibration pipeline.
+
 ## Workflow
 
 1. Create a dated artifact directory in a temp or user-requested location.
