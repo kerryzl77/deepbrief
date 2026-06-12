@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import datetime as dt
 import json
 import os
 import re
@@ -26,6 +27,16 @@ MIN_INLINE_TOTAL_REFS = 14
 MIN_CITATION_APPENDIX_ENTRIES = 5
 MIN_CITED_PARAGRAPH_RATIO = 0.55
 MAX_UNSOURCED_CODE_BLOCK_LINES = 24
+MAX_CANDIDATES_PER_SOURCE_ID = 15
+MONTHLY_MIN_LANE_WEEKS = 3
+MONTHLY_MIN_DEEP_DIVES = 2
+MONTHLY_MIN_DIVE_SOURCE_CITATIONS = 3
+PAGE_BOUNDS = {"daily": (8, 30), "monthly": (20, 40)}
+CONTENT_WIDTH_IN = 7.0
+MERMAID_SCALE = 2
+MERMAID_VIEWPORT_PX = 4096
+MERMAID_NATURAL_LABEL_PT = 12.0
+MIN_DIAGRAM_LABEL_PT = 7.0
 RESEARCH_LANE_MINIMUMS = {
     "papers": 25,
     "repos": 25,
@@ -35,7 +46,7 @@ RESEARCH_LANE_MINIMUMS = {
     "discourse": 10,
 }
 RESEARCH_REQUIRED_FANOUT_LANES = tuple(RESEARCH_LANE_MINIMUMS.keys())
-REQUIRED_HEADINGS = [
+REQUIRED_HEADINGS_DAILY = [
     "# Today's Deep Dive",
     "# Skim Cards",
     "# Foundations & Connections",
@@ -44,6 +55,22 @@ REQUIRED_HEADINGS = [
     "# Errata",
     "# Citation Appendix",
 ]
+REQUIRED_HEADINGS_MONTHLY = [
+    "# Executive Synthesis",
+    "# Monthly Themes",
+    "# Deep Dives",
+    "# Skim Cards",
+    "# Change Maps",
+    "# Pipeline Report",
+    "# Month-Ahead Queue",
+    "# Errata",
+    "# Citation Appendix",
+]
+MONTHLY_MARKER_HEADINGS = (
+    "# Executive Synthesis",
+    "# Monthly Themes",
+    "# Month-Ahead Queue",
+)
 DEEPDIVE_HEADINGS = [
     "## TL;DR",
     "## Mental model",
@@ -56,6 +83,29 @@ DEEPDIVE_HEADINGS = [
     "## Open questions",
     "## Sources & citations",
 ]
+MONTHLY_DEEPDIVE_SUBHEADINGS = [
+    "### TL;DR",
+    "### Mental model",
+    "### Why this matters now",
+    "### Mechanism trace",
+    "### Evidence map",
+    "### Walkthrough",
+    "### Implementation notes",
+    "### Try it yourself",
+    "### Open questions",
+    "### Sources & citations",
+]
+KEY_EVIDENCE_SECTIONS = [
+    "Why this matters now",
+    "Mechanism trace",
+    "Evidence map",
+    "Walkthrough",
+    "Implementation notes",
+]
+MONTHLY_REPORT_REQUIRED_SECTIONS = {
+    "deep_dive": ["inventory", "mechanism", "limitation", "evidence"],
+    "skim": ["mechanism", "limitation", "evidence"],
+}
 SOURCE_REF_RE = re.compile(r"`[^`\n]+:\d+(?:-\d+)?`")
 CITATION_LINK_RE = re.compile(r"\[(?P<num>\d+)\]\(#(?P<prefix>source|citation)-(?P=num)\)")
 CITATION_TARGET_RE = re.compile(
@@ -85,8 +135,18 @@ def main() -> int:
     parser.add_argument("--input", required=True, help="Path to completed brief.md.")
     parser.add_argument("--out", required=True, help="Output artifact directory.")
     parser.add_argument("--template", help="Optional Typst template path.")
-    parser.add_argument("--min-pages", type=int, default=8, help="Minimum acceptable PDF pages; daily default is 8.")
-    parser.add_argument("--max-pages", type=int, default=30, help="Maximum acceptable PDF pages; daily default is 30.")
+    parser.add_argument(
+        "--profile",
+        choices=["auto", "daily", "monthly"],
+        default="auto",
+        help="Brief profile. 'auto' detects monthly briefs from their top-level headings.",
+    )
+    parser.add_argument(
+        "--min-pages", type=int, default=None, help="Minimum acceptable PDF pages; default 8 daily, 20 monthly."
+    )
+    parser.add_argument(
+        "--max-pages", type=int, default=None, help="Maximum acceptable PDF pages; default 30 daily, 40 monthly."
+    )
     parser.add_argument(
         "--allow-degraded-research",
         action="store_true",
@@ -99,13 +159,21 @@ def main() -> int:
     out_dir.mkdir(parents=True, exist_ok=True)
     template = Path(args.template).expanduser().resolve() if args.template else skill_dir() / "assets" / "brief.typ"
 
+    source_text = source.read_text(encoding="utf-8")
+    profile = args.profile if args.profile != "auto" else detect_profile(source_text)
+    min_pages, max_pages = PAGE_BOUNDS[profile]
+    if args.min_pages is not None:
+        min_pages = args.min_pages
+    if args.max_pages is not None:
+        max_pages = args.max_pages
+
     rendered_md = out_dir / "brief.rendered.md"
     typst_path = out_dir / "brief.typ"
     pdf_path = out_dir / "brief.pdf"
     diagrams_dir = out_dir / "diagrams"
 
-    lint = lint_markdown(source)
-    research = check_research_artifacts(out_dir)
+    lint = lint_markdown(source, profile)
+    research = check_research_artifacts(out_dir, profile)
     tools = check_tools()
     research_blocking = bool(research["blocking_errors"]) and not args.allow_degraded_research
     if lint["blocking_errors"] or tools["missing"] or research_blocking:
@@ -113,6 +181,7 @@ def main() -> int:
             json.dumps(
                 {
                     "status": "blocked",
+                    "profile": profile,
                     "lint": lint,
                     "research": research,
                     "research_degraded_allowed": args.allow_degraded_research,
@@ -132,6 +201,7 @@ def main() -> int:
                 {
                     "status": "failed",
                     "stage": "mermaid",
+                    "profile": profile,
                     "reason": str(exc),
                     "hint": "Mermaid CLI uses a headless browser; rerun with browser permissions or fix the Mermaid block.",
                 },
@@ -140,38 +210,70 @@ def main() -> int:
             )
         )
         return 2
-    pandoc = run_cmd(
-        [
-            tools["paths"]["pandoc"],
-            "--from",
-            "markdown+tex_math_dollars+pipe_tables+fenced_code_attributes",
-            "--to",
-            "typst",
-            "--standalone",
-            "--template",
-            str(template),
-            "--output",
-            str(typst_path),
-            str(rendered_md),
-        ]
-    )
+    pandoc_cmd = [
+        tools["paths"]["pandoc"],
+        "--from",
+        "markdown+tex_math_dollars+pipe_tables+fenced_code_attributes",
+        "--to",
+        "typst",
+        "--standalone",
+        "--template",
+        str(template),
+        "--output",
+        str(typst_path),
+    ]
+    pandoc_cmd.extend(default_metadata_args(source_text, profile, out_dir))
+    pandoc_cmd.append(str(rendered_md))
+    pandoc = run_cmd(pandoc_cmd)
     if pandoc["returncode"] != 0:
-        print(json.dumps({"status": "failed", "stage": "pandoc", "result": pandoc}, indent=2, sort_keys=True))
+        print(
+            json.dumps(
+                {"status": "failed", "stage": "pandoc", "profile": profile, "result": pandoc}, indent=2, sort_keys=True
+            )
+        )
         return 2
 
     typst_text = typst_path.read_text(encoding="utf-8")
-    typst_path.write_text(typst_text.replace("#horizontalrule", '#line(length: 100%)'), encoding="utf-8")
+    typst_text = typst_text.replace("#horizontalrule", "#line(length: 100%)")
+    typst_path.write_text(typst_text, encoding="utf-8")
+    anchors = check_citation_anchors(source_text, typst_text)
+    if anchors["missing"]:
+        print(
+            json.dumps(
+                {
+                    "status": "failed",
+                    "stage": "citation_anchors",
+                    "profile": profile,
+                    "reason": (
+                        f"citation links {anchors['missing']} have no surviving anchors in the converted Typst "
+                        "output, so the PDF links would be broken"
+                    ),
+                    "hint": (
+                        "write each # Citation Appendix entry as a heading with an attribute, for example "
+                        "`### [3] Title {#source-3}`; raw HTML `<a id=...>` anchors are dropped during conversion"
+                    ),
+                },
+                indent=2,
+                sort_keys=True,
+            )
+        )
+        return 2
     typst = run_cmd([tools["paths"]["typst"], "compile", typst_path.name, pdf_path.name], cwd=out_dir)
     if typst["returncode"] != 0:
-        print(json.dumps({"status": "failed", "stage": "typst", "result": typst}, indent=2, sort_keys=True))
+        print(
+            json.dumps(
+                {"status": "failed", "stage": "typst", "profile": profile, "result": typst}, indent=2, sort_keys=True
+            )
+        )
         return 2
 
-    post = post_checks(pdf_path, typst_path, diagrams, out_dir, tools, args.min_pages, args.max_pages)
+    post = post_checks(pdf_path, typst_path, diagrams, out_dir, tools, min_pages, max_pages, profile)
     status = "ok" if post["ok"] else "failed"
     print(
         json.dumps(
             {
                 "status": status,
+                "profile": profile,
                 "brief_md": str(source),
                 "rendered_md": str(rendered_md),
                 "typst": str(typst_path),
@@ -181,6 +283,7 @@ def main() -> int:
                 "research_degraded_allowed": args.allow_degraded_research,
                 "tools": tools,
                 "diagrams": diagrams,
+                "citation_anchors": anchors,
                 "post_checks": post,
             },
             indent=2,
@@ -194,32 +297,44 @@ def skill_dir() -> Path:
     return Path(__file__).resolve().parents[1]
 
 
-def lint_markdown(path: Path) -> dict[str, Any]:
-    text = path.read_text(encoding="utf-8")
-    missing = [heading for heading in REQUIRED_HEADINGS if heading not in text]
-    missing_deep = [heading for heading in DEEPDIVE_HEADINGS if heading not in text]
-    source_section = section(text, "## Sources & citations")
-    citations = len(
-        [
-            line
-            for line in source_section.splitlines()
-            if "http://" in line or "https://" in line or CITATION_LINK_RE.search(line)
-        ]
+def detect_profile(text: str) -> str:
+    return "monthly" if any(heading in text for heading in MONTHLY_MARKER_HEADINGS) else "daily"
+
+
+def default_metadata_args(source_text: str, profile: str, out_dir: Path) -> list[str]:
+    if source_text.startswith("---\n"):
+        return []
+    title = f"DeepBrief {'Monthly' if profile == 'monthly' else 'Daily'} Brief"
+    date_label = (
+        out_dir.name if re.fullmatch(r"\d{4}-\d{2}(-\d{2})?", out_dir.name) else dt.date.today().isoformat()
     )
+    return ["--metadata", f"title={title}", "--metadata", f"date={date_label}"]
+
+
+def lint_markdown(path: Path, profile: str) -> dict[str, Any]:
+    text = path.read_text(encoding="utf-8")
+    required = REQUIRED_HEADINGS_MONTHLY if profile == "monthly" else REQUIRED_HEADINGS_DAILY
+    missing = [heading for heading in required if heading not in text]
+    errors: list[str] = []
+    if missing:
+        errors.append(f"missing top-level headings: {missing}")
+    if profile == "monthly":
+        errors.extend(monthly_deepdive_errors(text))
+        citations = sum(count_citation_lines(body) for body in sections_all(text, "### Sources & citations"))
+    else:
+        missing_deep = [heading for heading in DEEPDIVE_HEADINGS if heading not in text]
+        if missing_deep:
+            errors.append(f"missing deep-dive headings: {missing_deep}")
+        citations = count_citation_lines(section(text, "## Sources & citations"))
+        if citations < MIN_SOURCE_SECTION_CITATIONS:
+            errors.append(f"sources section has {citations} citations, expected at least {MIN_SOURCE_SECTION_CITATIONS}")
     visual_refs = len(re.findall(r"!\[[^\]]*\]\([^)]+\)", text)) + len(re.findall(r"```mermaid\s+", text))
-    inline = inline_evidence_metrics(text)
+    inline = inline_evidence_metrics(text, profile)
     appendix = citation_appendix_metrics(text)
     code_blocks = check_code_blocks(text)
     weak_visuals = weak_visual_captions(text)
-    errors = []
-    if missing:
-        errors.append(f"missing top-level headings: {missing}")
-    if missing_deep:
-        errors.append(f"missing deep-dive headings: {missing_deep}")
-    if re.search(r"^## Pseudocode\s*$", text, flags=re.MULTILINE):
+    if re.search(r"^#{2,3} Pseudocode\s*$", text, flags=re.MULTILINE):
         errors.append("old `## Pseudocode` heading is no longer accepted; use `## Mechanism trace` plus real source snippets")
-    if citations < MIN_SOURCE_SECTION_CITATIONS:
-        errors.append(f"sources section has {citations} citations, expected at least {MIN_SOURCE_SECTION_CITATIONS}")
     if visual_refs < 2:
         errors.append("brief must include at least one explanatory diagram and one visual asset")
     if inline["local_ref_count"] > 0:
@@ -260,24 +375,70 @@ def lint_markdown(path: Path) -> dict[str, Any]:
     }
 
 
-def inline_evidence_metrics(text: str) -> dict[str, Any]:
+def count_citation_lines(text: str) -> int:
+    return len(
+        [
+            line
+            for line in text.splitlines()
+            if "http://" in line or "https://" in line or CITATION_LINK_RE.search(line)
+        ]
+    )
+
+
+def monthly_deepdive_errors(text: str) -> list[str]:
+    errors: list[str] = []
+    dives_section = top_level_section(text, "# Deep Dives")
+    dives = split_subsections(dives_section, 2)
+    if len(dives) < MONTHLY_MIN_DEEP_DIVES:
+        errors.append(
+            f"# Deep Dives contains {len(dives)} `## <dive title>` sections, expected at least "
+            f"{MONTHLY_MIN_DEEP_DIVES}; group every deep dive as a `##` section under the single # Deep Dives heading"
+        )
+    for title, body in dives:
+        missing = [
+            heading
+            for heading in MONTHLY_DEEPDIVE_SUBHEADINGS
+            if not re.search(rf"^{re.escape(heading)}\s*$", body, flags=re.MULTILINE)
+        ]
+        if missing:
+            errors.append(
+                f"deep dive {title!r} is missing subsections {missing}; every monthly deep dive needs the full "
+                "### TL;DR through ### Sources & citations schema"
+            )
+        if "### Sources & citations" not in missing:
+            cites = count_citation_lines(section(body, "### Sources & citations"))
+            if cites < MONTHLY_MIN_DIVE_SOURCE_CITATIONS:
+                errors.append(
+                    f"deep dive {title!r} has {cites} citation lines under ### Sources & citations, expected at "
+                    f"least {MONTHLY_MIN_DIVE_SOURCE_CITATIONS}"
+                )
+    return errors
+
+
+def split_subsections(text: str, level: int) -> list[tuple[str, str]]:
+    pattern = re.compile(rf"^{'#' * level} (?!#)(.+?)\s*$", flags=re.MULTILINE)
+    matches = list(pattern.finditer(text))
+    sections: list[tuple[str, str]] = []
+    for index, match in enumerate(matches):
+        end = matches[index + 1].start() if index + 1 < len(matches) else len(text)
+        sections.append((match.group(1).strip(), text[match.start() : end]))
+    return sections
+
+
+def inline_evidence_metrics(text: str, profile: str) -> dict[str, Any]:
     body = before_top_level_section(text, "# Citation Appendix")
     visible_body = strip_fenced_code(body)
     local_refs = SOURCE_REF_RE.findall(visible_body)
     citation_links = CITATION_LINK_RE.findall(visible_body)
     urls = URL_RE.findall(visible_body)
-    key_sections = [
-        "## Why this matters now",
-        "## Mechanism trace",
-        "## Evidence map",
-        "## Walkthrough",
-        "## Implementation notes",
-    ]
-    key_counts = {
-        heading: len(CITATION_LINK_RE.findall(strip_fenced_code(section(text, heading))))
-        + len(URL_RE.findall(strip_fenced_code(section(text, heading))))
-        for heading in key_sections
-    }
+    level = "###" if profile == "monthly" else "##"
+    key_counts: dict[str, int] = {}
+    for name in KEY_EVIDENCE_SECTIONS:
+        heading = f"{level} {name}"
+        merged = "\n".join(sections_all(text, heading))
+        key_counts[heading] = len(CITATION_LINK_RE.findall(strip_fenced_code(merged))) + len(
+            URL_RE.findall(strip_fenced_code(merged))
+        )
     paragraphs = material_paragraphs(visible_body)
     cited = [paragraph for paragraph in paragraphs if CITATION_LINK_RE.search(paragraph) or URL_RE.search(paragraph)]
     ratio = (len(cited) / len(paragraphs)) if paragraphs else 1.0
@@ -336,6 +497,16 @@ def citation_target_ids(text: str) -> set[str]:
         if value:
             ids.add(value)
     return ids
+
+
+def check_citation_anchors(markdown_text: str, typst_text: str) -> dict[str, Any]:
+    used = citation_ids(markdown_text)
+    defined = {
+        match.group(1)
+        for match in re.finditer(r"(?<!#link\()<(?:source|citation)-(\d+)>", typst_text)
+    }
+    missing = sorted(used - defined, key=int)
+    return {"used": sorted(used, key=int), "missing": missing}
 
 
 def strip_fenced_code(text: str) -> str:
@@ -428,7 +599,7 @@ def weak_visual_captions(text: str) -> list[str]:
     return errors
 
 
-def check_research_artifacts(output_dir: Path) -> dict[str, Any]:
+def check_research_artifacts(output_dir: Path, profile: str) -> dict[str, Any]:
     sources_dir = output_dir / "sources"
     reviews_dir = output_dir / "reviews"
     verification_dir = output_dir / "verification"
@@ -457,6 +628,8 @@ def check_research_artifacts(output_dir: Path) -> dict[str, Any]:
         lane = str(row.get("lane", "")).strip()
         lane_candidate_keys.setdefault(lane, set()).add(key)
     lane_counts = {lane: len(keys) for lane, keys in lane_candidate_keys.items()}
+    source_concentration = candidate_source_concentration(candidates)
+    week_coverage = candidate_week_coverage(candidates)
     downloaded_artifacts = [row for row in manifest if artifact_exists(output_dir, row)]
     selected_manifest_rows = [row for row in manifest if artifact_selected(row)]
     selected_artifacts = [row for row in selected_manifest_rows if artifact_exists(output_dir, row)]
@@ -490,7 +663,7 @@ def check_research_artifacts(output_dir: Path) -> dict[str, Any]:
     ]
     evidence_path = next((path for path in evidence_paths if path.exists() and path.stat().st_size > 0), None)
     selected_report_requirements = report_requirements(selected_artifacts)
-    report_quality = check_read_report_quality(reviews_dir, selected_report_requirements)
+    report_quality = check_read_report_quality(reviews_dir, selected_report_requirements, profile)
 
     if not candidates_path.exists():
         errors.append(f"missing candidate log: {candidates_path}")
@@ -501,6 +674,25 @@ def check_research_artifacts(output_dir: Path) -> dict[str, Any]:
     for lane, minimum in RESEARCH_LANE_MINIMUMS.items():
         if lane_counts.get(lane, 0) < minimum:
             errors.append(f"candidate lane {lane!r} has {lane_counts.get(lane, 0)} candidates, expected at least {minimum}")
+    for source_id, count in sorted(source_concentration.items(), key=lambda item: -item[1]):
+        if count > MAX_CANDIDATES_PER_SOURCE_ID:
+            warnings.append(
+                f"source_id {source_id!r} contributed {count} candidates (soft cap {MAX_CANDIDATES_PER_SOURCE_ID}); "
+                "diversify discovery queries so no single feed dominates a lane"
+            )
+    if profile == "monthly":
+        for lane in RESEARCH_REQUIRED_FANOUT_LANES:
+            coverage = week_coverage.get(lane, {"weeks": [], "dated": 0})
+            if coverage["dated"] == 0:
+                warnings.append(
+                    f"lane {lane!r} candidates carry no parseable published dates; record published_at so "
+                    "window coverage can be verified"
+                )
+            elif len(coverage["weeks"]) < MONTHLY_MIN_LANE_WEEKS:
+                warnings.append(
+                    f"lane {lane!r} candidates span only {len(coverage['weeks'])} distinct ISO weeks, expected at "
+                    f"least {MONTHLY_MIN_LANE_WEEKS}; use week-sliced date-window queries across the full month"
+                )
     if not manifest_path.exists():
         errors.append(f"missing raw artifact manifest: {manifest_path}")
     if len(downloaded_artifacts) < RESEARCH_MIN_RAW_ARTIFACTS:
@@ -556,6 +748,8 @@ def check_research_artifacts(output_dir: Path) -> dict[str, Any]:
         "missing_fanout_lanes": missing_fanout_lanes,
         "lane_counts": dict(sorted(lane_counts.items())),
         "lane_minimums": RESEARCH_LANE_MINIMUMS,
+        "source_concentration_top": dict(sorted(source_concentration.items(), key=lambda item: -item[1])[:10]),
+        "lane_week_coverage": dict(sorted(week_coverage.items())),
         "read_report_quality": report_quality["reports"],
         "paths": {
             "candidates": str(candidates_path),
@@ -566,6 +760,42 @@ def check_research_artifacts(output_dir: Path) -> dict[str, Any]:
             "read_reports": [str(path) for path in read_reports],
         },
     }
+
+
+def candidate_source_concentration(candidates: list[dict[str, Any]]) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for row in candidates:
+        source_id = str(row.get("source_id") or row.get("source") or "").strip()
+        if source_id:
+            counts[source_id] = counts.get(source_id, 0) + 1
+    return counts
+
+
+def candidate_week_coverage(candidates: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
+    coverage: dict[str, dict[str, Any]] = {}
+    for row in candidates:
+        lane = str(row.get("lane", "")).strip()
+        entry = coverage.setdefault(lane, {"weeks": set(), "dated": 0})
+        week = iso_week(row.get("published_at") or row.get("published") or row.get("date") or row.get("updated_at"))
+        if week:
+            entry["dated"] += 1
+            entry["weeks"].add(week)
+    return {
+        lane: {"dated": entry["dated"], "weeks": sorted(entry["weeks"])}
+        for lane, entry in coverage.items()
+    }
+
+
+def iso_week(value: Any) -> str | None:
+    match = re.search(r"(\d{4})-(\d{2})-(\d{2})", str(value or ""))
+    if not match:
+        return None
+    try:
+        day = dt.date(int(match.group(1)), int(match.group(2)), int(match.group(3)))
+    except ValueError:
+        return None
+    iso = day.isocalendar()
+    return f"{iso[0]}-W{iso[1]:02d}"
 
 
 def read_jsonl(path: Path) -> tuple[list[dict[str, Any]], list[str]]:
@@ -672,7 +902,7 @@ def report_requirements(selected_artifacts: list[dict[str, Any]]) -> dict[str, s
     return requirements
 
 
-def check_read_report_quality(reviews_dir: Path, requirements: dict[str, str]) -> dict[str, Any]:
+def check_read_report_quality(reviews_dir: Path, requirements: dict[str, str], profile: str) -> dict[str, Any]:
     errors: list[str] = []
     reports: dict[str, Any] = {}
     for candidate_id, kind in sorted(requirements.items()):
@@ -705,6 +935,16 @@ def check_read_report_quality(reviews_dir: Path, requirements: dict[str, str]) -
             errors.append(
                 f"deep-dive read report for {candidate_id!r} must include figure/table or file/artifact inventory"
             )
+        if profile == "monthly":
+            for keyword in MONTHLY_REPORT_REQUIRED_SECTIONS[kind]:
+                if not re.search(
+                    rf"(?im)^(?:#{{1,6}}[^\n]*{re.escape(keyword)}|\*\*[^\n]*{re.escape(keyword)})",
+                    text,
+                ):
+                    errors.append(
+                        f"read report for {candidate_id!r} lacks a {keyword!r} section; structure each report "
+                        "with headings covering inventory, mechanism, limitations, and evidence"
+                    )
     return {"blocking_errors": errors, "reports": reports}
 
 
@@ -717,6 +957,10 @@ def find_read_report(reviews_dir: Path, candidate_id: str) -> Path | None:
         if path.name == "fanout-report.md":
             continue
         if normalize_report_id(path.stem) == normalized:
+            return path
+    for path in sorted((reviews_dir / "subagents").glob("*.md")) + sorted((reviews_dir / "fanout").glob("*.md")):
+        stem = normalize_report_id(path.stem)
+        if stem == normalized or stem == f"read_{normalized}" or stem.endswith(f"_{normalized}"):
             return path
     return None
 
@@ -733,6 +977,16 @@ def section(markdown: str, heading: str) -> str:
     rest = markdown[match.end() :]
     next_heading = re.search(rf"^#{{1,{level}}} ", rest, flags=re.MULTILINE)
     return rest[: next_heading.start()] if next_heading else rest
+
+
+def sections_all(markdown: str, heading: str) -> list[str]:
+    level = len(heading) - len(heading.lstrip("#"))
+    bodies: list[str] = []
+    for match in re.finditer(rf"^{re.escape(heading)}\s*$", markdown, flags=re.MULTILINE):
+        rest = markdown[match.end() :]
+        next_heading = re.search(rf"^#{{1,{level}}} ", rest, flags=re.MULTILINE)
+        bodies.append(rest[: next_heading.start()] if next_heading else rest)
+    return bodies
 
 
 def check_tools() -> dict[str, Any]:
@@ -758,7 +1012,8 @@ def render_mermaid_blocks(source: Path, rendered: Path, diagrams_dir: Path) -> d
         diagram = diagrams_dir / f"{stem}.png"
         source_text = match.group(1).strip()
         quality = inspect_mermaid_source(source_text)
-        diagram_reports.append({"path": str(mmd), **quality})
+        report = {"path": str(mmd), **quality}
+        diagram_reports.append(report)
         if quality["blocking_errors"]:
             raise RuntimeError(f"Mermaid diagram {count} is too weak: {quality['blocking_errors']}")
         mmd.write_text(source_text + "\n", encoding="utf-8")
@@ -773,20 +1028,44 @@ def render_mermaid_blocks(source: Path, rendered: Path, diagrams_dir: Path) -> d
                 "white",
                 "-t",
                 "neutral",
+                "-s",
+                str(MERMAID_SCALE),
+                "-w",
+                str(MERMAID_VIEWPORT_PX),
                 "-c",
                 str(config),
             ]
         )
         if result["returncode"] != 0:
             raise RuntimeError(result["stderr"] or result["stdout"] or "mmdc failed")
+        width_px, _height_px = png_dimensions(diagram)
+        natural_in = width_px / MERMAID_SCALE / 96.0
+        embed_in = min(natural_in, CONTENT_WIDTH_IN) if natural_in > 0 else CONTENT_WIDTH_IN
+        label_pt = MERMAID_NATURAL_LABEL_PT * (embed_in / natural_in if natural_in > 0 else 1.0)
+        report["natural_width_in"] = round(natural_in, 2)
+        report["embed_width_in"] = round(embed_in, 2)
+        report["effective_label_pt"] = round(label_pt, 1)
+        if label_pt < MIN_DIAGRAM_LABEL_PT:
+            raise RuntimeError(
+                f"Mermaid diagram {count} is too wide to stay legible: at page width its labels shrink to "
+                f"~{label_pt:.1f}pt (minimum {MIN_DIAGRAM_LABEL_PT:.0f}pt). Re-orient the flowchart top-down "
+                "(`graph TD`), split it into two smaller diagrams, or shorten node labels."
+            )
         diagram_paths.append(str(diagram))
         rel = diagram.relative_to(rendered.parent).as_posix()
-        return f"\n![DeepBrief mechanism diagram {count}]({rel}){{ width=95% }}\n"
+        return f"\n![DeepBrief mechanism diagram {count}]({rel}){{width={embed_in:.2f}in}}\n"
 
     converted = re.sub(r"```mermaid\s*\n(.*?)```", replace, text, flags=re.DOTALL)
     converted = normalize_source_code_fences(converted)
     rendered.write_text(converted, encoding="utf-8")
     return {"count": count, "diagram_paths": diagram_paths, "reports": diagram_reports}
+
+
+def png_dimensions(path: Path) -> tuple[int, int]:
+    header = path.read_bytes()[:24]
+    if len(header) < 24 or header[:8] != b"\x89PNG\r\n\x1a\n":
+        return 0, 0
+    return int.from_bytes(header[16:20], "big"), int.from_bytes(header[20:24], "big")
 
 
 def normalize_source_code_fences(text: str) -> str:
@@ -851,6 +1130,7 @@ def post_checks(
     tools: dict[str, Any],
     min_pages: int,
     max_pages: int,
+    profile: str,
 ) -> dict[str, Any]:
     pages_dir = output_dir / "pages"
     pages_dir.mkdir(exist_ok=True)
@@ -873,7 +1153,12 @@ def post_checks(
     expected_headings_present = all(
         heading.replace("## ", "") in text for heading in ["## Mechanism trace", "## Evidence map", "## Implementation notes"]
     )
+    if profile == "monthly":
+        math_ok = not re.search(r"\\(frac|cdot|times|operatorname|mathbf|sum)\b", text)
+    else:
+        math_ok = "0.55" in text and "0.25" in text and "0.20" in text
     checks = {
+        "profile": profile,
         "pdf_nonzero": pdf_path.exists() and pdf_path.stat().st_size > 0,
         "pdf_size_bytes": pdf_path.stat().st_size if pdf_path.exists() else 0,
         "feedback_exists": (output_dir / "feedback.md").exists(),
@@ -886,7 +1171,7 @@ def post_checks(
         "diagram_files_exist": all(Path(path).exists() and Path(path).stat().st_size > 0 for path in diagram_paths),
         "typst_references_all_diagrams": all(Path(path).name in typst_text for path in diagram_paths),
         "toc_outline_present": "#outline(" in typst_text,
-        "math_text_present": "0.55" in text and "0.25" in text and "0.20" in text,
+        "math_ok": bool(math_ok),
         "fonts_embedded": fonts_embedded(pdffonts),
         "generic_diagram_caption_absent": not generic_diagram_caption,
         "diagram_quality_ok": not diagram_errors,
@@ -903,7 +1188,7 @@ def post_checks(
             checks["diagram_files_exist"],
             checks["typst_references_all_diagrams"],
             checks["toc_outline_present"],
-            checks["math_text_present"],
+            checks["math_ok"],
             checks["fonts_embedded"],
             checks["generic_diagram_caption_absent"],
             checks["diagram_quality_ok"],
