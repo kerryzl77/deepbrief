@@ -79,6 +79,7 @@ For monthly runs with many read reports, do not feed every read report into the 
    - After the shortlist is chosen and raw artifacts are downloaded, spawn one source-specific read/verification subagent per selected artifact when the user requested source-specific subagents or 100+ deep-read workers. Give each subagent exact local paths and ask it to inspect the saved artifact with read-only shell commands such as `rg`, `nl`, `sed`, `pdfinfo`, `pdftotext`, `git show`, and `git grep`.
    - Save selected-source local read outputs as `reviews/subagents/read-<item-id>.md`. Each must list local paths inspected, exact evidence references found, mechanism notes, limitations, and what should appear in the final synthesis.
    - Do not count script-generated `reviews/read-workers/*.md` as source-specific subagent outputs unless the user explicitly approved a degraded non-subagent run after being told the requested subagents could not be spawned.
+   - Before reducing, synthesizing, or rendering, reconcile the selected source ids against actual `reviews/subagents/read-*.md` reports and record the count in `reviews/fanout-report.md` or `verification/research-gate-check.*`. If requested/high-recall source-specific fanout has zero actual subagent reports, or fewer reports than the selected-source gate requires, stop and ask for explicit degraded-run approval. Parent-written `reviews/*.md` notes and `reviews/read-workers/*.md` files may support debugging but do not clear this gate.
    - Save `reviews/fanout-report.md` with lane assignments, source counts, raw downloads, top candidates, failed fetches, unresolved gaps, and links to the saved raw lane reports.
 
 5. **Rank**
@@ -138,6 +139,7 @@ For monthly runs with many read reports, do not feed every read report into the 
 
 12. **Render and QA**
    - Run `python <skill>/scripts/render_brief.py --input brief.md --out <artifact-dir>`.
+   - Confirm the selected-source/read-subagent reconciliation from the fanout report or research-gate check before invoking the renderer. Rendering is blocked if requested/high-recall source-specific fanout is missing and no explicit degraded-run approval exists.
    - Fix research-gate, lint, citation, layout, diagram, and PDF failures until the renderer reports `status: ok`.
    - Run the print-quality loop until every check passes, not just until the renderer exits 0: rasterize the pages (the renderer leaves them under `pages/`), then verify that table-of-contents links land on the right sections, math renders as math rather than raw markup, every diagram is crisp and its labels legible at print size, no code block overflows the page margins, and fonts are embedded. Fix and re-render; repeat the inspection on the new pages.
    - Visually inspect representative rendered pages: cover/stats, deep-dive mechanism, diagram/visual page, skim page, and pipeline page. If any page is dense, illegible, or unstyled, revise content/template rather than accepting mechanical success.
