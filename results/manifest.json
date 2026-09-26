@@ -1,0 +1,530 @@
+[
+  {
+    "path": "2026-06-16-claude-code-course-book/brief.md",
+    "sha256": "bdeccb0cfbc7cfba4a8f30764dd4146182f4fb932f2bdd70776ddc0d708deb65"
+  },
+  {
+    "path": "2026-06-16-claude-code-course-book/brief.pdf",
+    "sha256": "d80209ce498af0fea5a466e070a718aaae77e60d930e4693a3d258f125447553"
+  },
+  {
+    "path": "2026-06-16-claude-code-course-book/images/claude-npm-img.png",
+    "sha256": "fe80f30473faabcf200ca1e8ea60d660a97f1ae28e878cedfbaa5f357d9f78ef"
+  },
+  {
+    "path": "2026-06-18-codex-source-course-book/brief.md",
+    "sha256": "0e7c13b2a170ca977d76b5e2fd3b9999c04d06499ee6392f66e0dc43e7e16c3d"
+  },
+  {
+    "path": "2026-06-18-codex-source-course-book/brief.pdf",
+    "sha256": "b6f2a4817a2639dde3d65dff8f115885eba157ba8921a72a52c34421428ad069"
+  },
+  {
+    "path": "2026-06-18-codex-source-course-book/repos/codex/.github/codex-cli-splash.png",
+    "sha256": "15b86fa9c0790a779ecdd84f1e7dee029ab79bfb093bd3c4876998696925b013"
+  },
+  {
+    "path": "2026-07-01-ai-engineer-youtube/brief.md",
+    "sha256": "d61281cddf674c7483cec71f51b2db9c872a34154ac4bcd2fa0a3d8e9c25691d"
+  },
+  {
+    "path": "2026-07-01-ai-engineer-youtube/brief.pdf",
+    "sha256": "10238e2fa91de33e6ff75d376869c7744c7185442c170aa56b44600725bdfe92"
+  },
+  {
+    "path": "2026-07-01-ai-engineer-youtube/images/research-os-memory-loop.svg",
+    "sha256": "f5c43e42bd1dc5929715ed08a039c271274e6f767cad5895d0e8655a1961e8b0"
+  },
+  {
+    "path": "agent-eval-special-2026-06-16-codex/brief.md",
+    "sha256": "edfae2409474e3dbb129bfb07f1655774ee088b80e3de8b5f5e771b86d8837a3"
+  },
+  {
+    "path": "agent-eval-special-2026-06-16-codex/brief.pdf",
+    "sha256": "71f56acef9927d87173a808db74e68e78314017cfcfc574107138db25707c62f"
+  },
+  {
+    "path": "cs162-course-notes-2026-06-12/brief.md",
+    "sha256": "ddc4ef3a323ca4998da57c663913d79037db985e7f044227a375bfa629173acc"
+  },
+  {
+    "path": "cs162-course-notes-2026-06-12/brief.pdf",
+    "sha256": "0d239330f6703505a80087047974be188c9873b2b6488ec7702dd56b94dcdf04"
+  },
+  {
+    "path": "cs294-288-paper-book-2026-07-03/brief.md",
+    "sha256": "a8b95c279bbb531a87825e75dbae3220c4079b67317e8154f43fb39e48ff44e8"
+  },
+  {
+    "path": "cs294-288-paper-book-2026-07-03/brief.pdf",
+    "sha256": "da471aec9c5319a73520641accbfdf0e90aaee7293c5b8e2133744d65c014942"
+  },
+  {
+    "path": "cs294-288-paper-book-2026-07-03/images/course-reading-distribution.svg",
+    "sha256": "d76a03276ea4f3e6d4cac35613fae872a71494a500253920e400943706ecf3c2"
+  },
+  {
+    "path": "daily-must-read/2026-06-22/digest.md",
+    "sha256": "26fbfa781a514a825e4e10a5aca3ec0e81cc01865fe131acbbfbd0c2b7b6899b"
+  },
+  {
+    "path": "daily-must-read/2026-06-24/digest.md",
+    "sha256": "c0780301e8c52b202230dc7e686ac37d5882f35b138a073b48d1cb1de7074eea"
+  },
+  {
+    "path": "daily-must-read/2026-06-25/digest.md",
+    "sha256": "b41133a964a10cd813c252ff05b3b904a38140296a252c5c5e06178cf1b5d63a"
+  },
+  {
+    "path": "daily-must-read/2026-06-26/digest.md",
+    "sha256": "403ce2bb6222ba468d04eca88e06de17fac866068c3219e2956d4de7cf68bf02"
+  },
+  {
+    "path": "daily-must-read/2026-06-27/digest.md",
+    "sha256": "aaf4a1aa75d514445fb6e104534d75d79f23fe23b2b04c4af23f586acd0ebb5d"
+  },
+  {
+    "path": "daily-must-read/2026-06-28/digest.md",
+    "sha256": "ea93f967d2ba417083402e8a3cb556c63013781b23ffcdce41414651d273b552"
+  },
+  {
+    "path": "daily-must-read/2026-06-30/digest.md",
+    "sha256": "6cf706e8ab3870a6670c9071fd001c20949835044d497bddddcd4216346419cd"
+  },
+  {
+    "path": "daily-must-read/2026-07-01/digest.md",
+    "sha256": "5f4bf258b74a94dda109d44d851519e743c63bd364419e0c13423cf2ebc1413d"
+  },
+  {
+    "path": "daily-must-read/2026-07-02/digest.md",
+    "sha256": "c9a6cf13ccd47cd9cc54a0f29ce134320307040cdbfc0a6d5193526351a59046"
+  },
+  {
+    "path": "daily-must-read/2026-07-03/digest.md",
+    "sha256": "2303cb80be4f7fe3fbaf0af5bf1a7818dc7d864e27287872c2588131e5888c77"
+  },
+  {
+    "path": "daily-must-read/2026-07-04/digest.md",
+    "sha256": "f52a9ba6acd0dff9e821fed3d1e8aa9715d565865604c461ebf4e05a7567956d"
+  },
+  {
+    "path": "daily-must-read/2026-07-05/digest.md",
+    "sha256": "f4206bf03c270216a7e6af7e0a9e0487b4bba51475a07bc6e707c35570bee11d"
+  },
+  {
+    "path": "daily-must-read/2026-07-06/digest.md",
+    "sha256": "ccf7974e9d3aa9a77197acd36929f29ab44841c65e8046907c76f6de9601f33a"
+  },
+  {
+    "path": "daily-must-read/2026-07-07/digest.md",
+    "sha256": "ef34d98bfd82cce60875d4a7bc46506c136498f08d9948d5d2e6b7ca67a00f7f"
+  },
+  {
+    "path": "daily-must-read/2026-07-08/digest.md",
+    "sha256": "fdee6a1e0697b6b6c104f97276d11465244d357a56e4c7f2c21ceaaee3d8ee66"
+  },
+  {
+    "path": "daily-must-read/2026-07-09/digest.md",
+    "sha256": "2a56e55f50d5f6e1f4b5a4ce8f8899852dbc739d9bc5cdb95dac9160c725eedb"
+  },
+  {
+    "path": "daily-must-read/2026-07-11/digest.md",
+    "sha256": "e7fa63e0ed7e1b3e491dcf83a1d60ee54d7f83cb7dcf775cf7e529d13d328213"
+  },
+  {
+    "path": "daily-must-read/2026-07-12/digest.md",
+    "sha256": "dc3f50ec79f9fbf6538e600cc4de74301adcceeb8e2361728cea623400b224e0"
+  },
+  {
+    "path": "daily-must-read/2026-07-14/digest.md",
+    "sha256": "24f01b7f057a6dad445d1f235510648afd75e60131c120aff91e95863d31fe27"
+  },
+  {
+    "path": "daily-must-read/2026-07-15/digest.md",
+    "sha256": "5f50d5d2fa5f2fd04b164dcdfb9b60f01ae80713e9d132889481842c2a44511f"
+  },
+  {
+    "path": "daily-must-read/2026-07-17/digest.md",
+    "sha256": "73932ad2f6a91a80d948cf42dd633d5eaed1bc8d8ee1a9696b0451c3b85fff65"
+  },
+  {
+    "path": "daily-must-read/2026-07-18/digest.md",
+    "sha256": "8a04965bb93480dbd4872c63729a1a26ef2d392f7ae6a61411ac0c56279bd5dc"
+  },
+  {
+    "path": "daily-must-read/2026-07-19/digest.md",
+    "sha256": "02919736522a1383ce60edfb80fc349ef7a5f26b1675a4a8de95a0cb4084417f"
+  },
+  {
+    "path": "daily-must-read/2026-07-20/digest.md",
+    "sha256": "146090ea41b26723ccd4a3f032e32f981ad9e7945ef5ccbeb630eb29f7b72275"
+  },
+  {
+    "path": "daily-must-read/2026-07-21/digest.md",
+    "sha256": "93a888dd27462d5faa8b7dc7c9672a10a5af6b4a09e90b756945dd31199c175a"
+  },
+  {
+    "path": "daily-must-read/2026-07-22/digest.md",
+    "sha256": "780630409e9d3cb9c42145feee7981ebf37d03a90f1d5ba48a10c2cb6b30ed88"
+  },
+  {
+    "path": "daily-must-read/2026-07-23/digest.md",
+    "sha256": "c6bf62b63449767f461ebebf0843c1f0d62887372d39ae4b5429278aeb06b3f1"
+  },
+  {
+    "path": "daily-must-read/2026-07-24/digest.md",
+    "sha256": "b1e1216f9950f87a95f930c25d0819ac41a511329db5a63957a64b2c746d4500"
+  },
+  {
+    "path": "daily-must-read/2026-07-25/digest.md",
+    "sha256": "4a8e172f8402341b5d53efde71ac35255d9c0aaaa9fe32eff55f82844ef73b83"
+  },
+  {
+    "path": "daily-must-read/2026-07-26/digest.md",
+    "sha256": "fa13cb944b4606dedb8da901cd39027f773c5f0b3f9e9bc610024c4b1a557be9"
+  },
+  {
+    "path": "daily-must-read/2026-07-27/digest.md",
+    "sha256": "9ea319e59bf7f3e9765e6e67ce2bdac361218ec38f4482d388aeff4e09e14913"
+  },
+  {
+    "path": "daily-must-read/2026-07-28/digest.md",
+    "sha256": "c46fd162f56662eb6b6bb14df9d6baca84a1f2bad12c7a7bb77128baf075eab4"
+  },
+  {
+    "path": "daily-must-read/2026-08-01/digest.md",
+    "sha256": "9683b453288c66b52692f286d56488ceb80aa5d91b163a57eb4b1a4a195bc43a"
+  },
+  {
+    "path": "daily-must-read/2026-08-02/digest.md",
+    "sha256": "f11f197b28d86307ecd04397846fe2ae66a8021e59c0cfeb55deab4d20b2cdf5"
+  },
+  {
+    "path": "daily-must-read/2026-08-03/digest.md",
+    "sha256": "14fcc19f095eae39bab554b52a1de69d38ce9efee396c8a2c3b92dd01bbd9ab9"
+  },
+  {
+    "path": "daily-must-read/2026-08-04/digest.md",
+    "sha256": "774a82846ff6da9ff8e30ada3e8d3790f3f1c8178a370987b15b6ab77b41164c"
+  },
+  {
+    "path": "daily-must-read/2026-08-05/digest.md",
+    "sha256": "d19c2521dfe82cad0483c0e670dba1e19559c325ab6d6eaf9bf5508404d64de6"
+  },
+  {
+    "path": "daily-must-read/2026-08-07/digest.md",
+    "sha256": "02e6c33fa67a1b6b72bd8523abc37f5fe0892b10b7c1c49c351e5f71c170043f"
+  },
+  {
+    "path": "daily-must-read/2026-08-08/digest.md",
+    "sha256": "371c860596ca320ce65f7c4ff01de08cac09b148257aeef4f6ceccba74183cd7"
+  },
+  {
+    "path": "daily-must-read/2026-08-09/digest.md",
+    "sha256": "2c82786958facc2991fc634496b10f2b46d5b8cf6644e70ce723f73155f01ec2"
+  },
+  {
+    "path": "daily-must-read/2026-08-10/digest.md",
+    "sha256": "48ff82e87ce0bea644a6a558a0803ba2ef0a327b9ba4d0b0ee2d848692ba3d88"
+  },
+  {
+    "path": "daily-must-read/2026-08-11/digest.md",
+    "sha256": "50baeadf4229091de0101e0189e6e9b064a82165cc576deb70132aec4b55aa65"
+  },
+  {
+    "path": "daily-must-read/2026-08-12/digest.md",
+    "sha256": "0e2cd478dd214b445feb72fca948dc8634907a677dd7bc8e222e62a5e41940b2"
+  },
+  {
+    "path": "daily-must-read/2026-08-13/digest.md",
+    "sha256": "df049fbee9ee39d4477aab6d5e5b2eae36c4962c2a98591bfa667b64f6db7944"
+  },
+  {
+    "path": "daily-must-read/2026-08-14/digest.md",
+    "sha256": "affe991bf18b1869dacb11cfd3fb053391ad414274dfd8b799c7b1aa79f2780e"
+  },
+  {
+    "path": "daily-must-read/2026-08-16/digest.md",
+    "sha256": "9ff8f7e33d564e7962511c8f8f8e163712ffe4f6868902f0f4078dad0a8b5159"
+  },
+  {
+    "path": "daily-must-read/2026-08-17/digest.md",
+    "sha256": "efcd4c3ed54d8aeb7219f8b64ac31d58ac0765be87ba17b2734fa10bb853a36f"
+  },
+  {
+    "path": "daily-must-read/2026-08-18/digest.md",
+    "sha256": "6b9b023c6d045a4f177d34d1df88961fb86bfc7ee37e5299296c5984fc7761cc"
+  },
+  {
+    "path": "daily-must-read/2026-08-19/digest.md",
+    "sha256": "0ec01b6fe3ade015f19c86cca740b3926add33da8c0f4aba550b55758f36172b"
+  },
+  {
+    "path": "daily-must-read/2026-08-21/digest.md",
+    "sha256": "ff77e46c46bf72a25a124794d73b8dec3c0eeadc7fc15cf9f35e49a8d4535091"
+  },
+  {
+    "path": "daily-must-read/2026-08-22/digest.md",
+    "sha256": "8efbb9da73d82df0b75544070fb9c19d9fe8bc2881d25558d82cb0244f8dcef1"
+  },
+  {
+    "path": "daily-must-read/2026-08-23/digest.md",
+    "sha256": "6088fb2ee3981f24973c9feb6d5302e7742f992d0693ff70981bae56f213a865"
+  },
+  {
+    "path": "daily-must-read/2026-08-24/digest.md",
+    "sha256": "c0a9d513d3ec23eb4bafd61dfdffeff0de7e2ac2f29dbf04644774ccab547abc"
+  },
+  {
+    "path": "daily-must-read/2026-08-26/digest.md",
+    "sha256": "fcc86e7a80841f20fc66123ad6498c9980a465b49e5f4a54c34df6a7189e055f"
+  },
+  {
+    "path": "daily-must-read/2026-08-28/digest.md",
+    "sha256": "3d3be57101d165ac3b5f4653054a08d2ceeb05eed16d425c6782b20dfdf1cdba"
+  },
+  {
+    "path": "daily-must-read/2026-08-29/digest.md",
+    "sha256": "eaedd289ee33c803f4d670187e17ff412d7daa33d390b4e2ef41fbbee09e9129"
+  },
+  {
+    "path": "daily-must-read/2026-08-30/digest.md",
+    "sha256": "859c2d869fba55190afd124f1dfd3e5eda20efe961e54998135a4f4ac696f5d7"
+  },
+  {
+    "path": "daily-must-read/2026-08-31/digest.md",
+    "sha256": "ff320221a7a0063b9acd540ef4ef3a35bc6800609a3516a5bd4b8775693951d4"
+  },
+  {
+    "path": "daily-must-read/2026-09-01/digest.md",
+    "sha256": "6f32349012625f82b04e7c5376ab79468bc6caf4fc8f41a73a696907ec42d159"
+  },
+  {
+    "path": "daily-must-read/2026-09-02/digest.md",
+    "sha256": "6f150e1bc5e4531b57c3414f873b4868dc6d0cd870f17e4ffb0133fcd64c94a5"
+  },
+  {
+    "path": "daily-must-read/2026-09-03/digest.md",
+    "sha256": "79d1d885af58a3974549effc811fd51eb05db8f9bb21105742c01d0fd6d48f84"
+  },
+  {
+    "path": "daily-must-read/2026-09-04/digest.md",
+    "sha256": "2461ea4d52203f86db597da513d04600a8aa0707c8ccfd6c5674b8da3e3f390e"
+  },
+  {
+    "path": "daily-must-read/2026-09-05/digest.md",
+    "sha256": "a7d55edd6973b261f8d12ac31190c43577f2e5b2e42fbe167753e9c4ba7a5aa4"
+  },
+  {
+    "path": "daily-must-read/2026-09-06/digest.md",
+    "sha256": "71e5529f133248f67fb08265024ee97ce843d6427b6ffac1e85b15c3ce9e5655"
+  },
+  {
+    "path": "daily-must-read/2026-09-06/fanout-briefing-prompt.md",
+    "sha256": "8d39273c517c6dd7dfab317e9d34c27f24e1e8fc9425456bffff048b5c90b8fd"
+  },
+  {
+    "path": "daily-must-read/2026-09-07/digest.md",
+    "sha256": "7bf883d3eb366a0dab153107d96d03a0986447f5f5ea13d0824fe028bb6a6a32"
+  },
+  {
+    "path": "daily-must-read/2026-09-09/digest.md",
+    "sha256": "6896121b7582e90a8231d7bba6f0be5febac2c4d6499f37bb8683954fb811f3b"
+  },
+  {
+    "path": "daily-must-read/2026-09-11/digest.md",
+    "sha256": "ffcf9b8760972ff3440f8273b57b0cdc7bec2855b39fe735572f6d574a745253"
+  },
+  {
+    "path": "daily-must-read/2026-09-13/digest.md",
+    "sha256": "0539614abac5189419ae98cc2ce5f481173372895c0627cc4c90a07725ab7417"
+  },
+  {
+    "path": "daily-must-read/2026-09-18/digest.md",
+    "sha256": "de7d8413aa1465652b6056daa7f50d6512ae7b085335d7d6f24e81c4d2f8b9ed"
+  },
+  {
+    "path": "daily-must-read/2026-09-19/digest.md",
+    "sha256": "160afab7042aebf46a74ca4ed246b1c2999d496e1ebc67f508de8d86ce26e980"
+  },
+  {
+    "path": "daily-must-read/2026-09-20/digest.md",
+    "sha256": "013b5075a3cb82ee04b49f2e0bab3396bd49d5a8a85fa0295b324c78aeadc526"
+  },
+  {
+    "path": "daily-must-read/2026-09-21/digest.md",
+    "sha256": "e0fcd183a051adeed11c8313a01fdccef23de0d8838e221c696c4a8d50288497"
+  },
+  {
+    "path": "daily-must-read/2026-09-22/digest.md",
+    "sha256": "44e3c90e795ccf10a1326a61afd0730c8d420df487b2c27332c269fc240c7f0e"
+  },
+  {
+    "path": "daily-must-read/2026-09-24/digest.md",
+    "sha256": "ba4ed4ebb604ff9788d9da79b00cfc52be78fc337614dcd1ec72bda134d2995d"
+  },
+  {
+    "path": "daily-must-read/2026-09-25/digest.md",
+    "sha256": "e1327620d1706748580e1ec928a73924d5278fc677960c2bdd7d2025c237dec3"
+  },
+  {
+    "path": "daily-must-read/2026-09-26/digest.md",
+    "sha256": "57d82b71489addc39309d501213a2c9f5aaf964f4195690af80e925120f16548"
+  },
+  {
+    "path": "hanlin-zhu-paper-survey-2026-07-06/brief.md",
+    "sha256": "831dcf1397a590a86832279fc5a00e7630b19f4b6f6b4f7bfa7b5962c67c13f0"
+  },
+  {
+    "path": "hanlin-zhu-paper-survey-2026-07-06/hanlin-zhu-paper-survey.pdf",
+    "sha256": "6ed82bc0862c3b7db98e73652ed6cfa97777b8c4a9789e6eae646ba2e012a06e"
+  },
+  {
+    "path": "hanlin-zhu-paper-survey-2026-07-06/images/figures/hz08-rut-fig1-crop.png",
+    "sha256": "247904fd32d491a74643f2d82808eb8e42d144f41b3a788a270ae750ddb38dc3"
+  },
+  {
+    "path": "hanlin-zhu-paper-survey-2026-07-06/images/figures/hz09-gsm-agent-fig1-crop.png",
+    "sha256": "1a3b2a7ccc908138c42af582973706389fcd5c4251672294b8ba871e04363dcf"
+  },
+  {
+    "path": "hanlin-zhu-paper-survey-2026-07-06/images/figures/hz20-prompt-cache-fig1-crop.png",
+    "sha256": "807f2d2ba05a8a33b67cb42757fb8d094af26d2822aabf2b477cd600e83a4485"
+  },
+  {
+    "path": "lisa-dunlap-papers-2026-07-05/brief.md",
+    "sha256": "354971ddd1e5bdb8b6c8278ac579c60326bbad142b4902d8f9c988c1ac848623"
+  },
+  {
+    "path": "lisa-dunlap-papers-2026-07-05/images/ranking-citation-relevance.png",
+    "sha256": "baaf467c911bf6d92a0d33e443d3543cc3b6cc44441487092bc58f407015e6a4"
+  },
+  {
+    "path": "lisa-dunlap-papers-2026-07-05/images/top-ranked-thumbnail-strip.png",
+    "sha256": "660c5cbc1bd464dcf1df11f333b71cc8547ba2aee7c6d530fb1fb430675063f3"
+  },
+  {
+    "path": "repo-design-book-2026-06-15/claude-code/brief.md",
+    "sha256": "5567ca3eecfb7f181fd470937d35ba8d16d322637e8dfdd765cc7c3848dfb479"
+  },
+  {
+    "path": "repo-design-book-2026-06-15/claude-code/brief.pdf",
+    "sha256": "2d114ac9de376fec905236cb94c4515b47753b609695ca88b0f63ec6f343e7fb"
+  },
+  {
+    "path": "repo-design-book-2026-06-15/claude-code/claude-code-repo-design-book.md",
+    "sha256": "5567ca3eecfb7f181fd470937d35ba8d16d322637e8dfdd765cc7c3848dfb479"
+  },
+  {
+    "path": "repo-design-book-2026-06-15/claude-code/claude-code-repo-design-book.pdf",
+    "sha256": "2d114ac9de376fec905236cb94c4515b47753b609695ca88b0f63ec6f343e7fb"
+  },
+  {
+    "path": "repo-design-book-2026-06-15/claude-code/images/claude-logo.png",
+    "sha256": "6f861f0f6998e6d64ffba8461cb8f70cab8f89a9df163d776025d8b9a55d6d79"
+  },
+  {
+    "path": "repo-design-book-2026-06-15/codex/brief.md",
+    "sha256": "ec99312f25984507261aea4341ace41088105cee37803d1ee1f31cdb8944b69c"
+  },
+  {
+    "path": "repo-design-book-2026-06-15/codex/brief.pdf",
+    "sha256": "7e2494217a19ef89cbc680d169f1193509c9163bfdd936b0b354ddf14218ff04"
+  },
+  {
+    "path": "repo-design-book-2026-06-15/codex/codex-repo-design-book.md",
+    "sha256": "ec99312f25984507261aea4341ace41088105cee37803d1ee1f31cdb8944b69c"
+  },
+  {
+    "path": "repo-design-book-2026-06-15/codex/codex-repo-design-book.pdf",
+    "sha256": "7e2494217a19ef89cbc680d169f1193509c9163bfdd936b0b354ddf14218ff04"
+  },
+  {
+    "path": "repo-design-book-2026-06-15/codex/images/codex-openai-docs.png",
+    "sha256": "156cc84d7332bfe95b310350bd470b690d22aa33d65340cc6c2e06022946194c"
+  },
+  {
+    "path": "repo-design-book-2026-06-15/comparison/codex-vs-claude-code-design-summary.md",
+    "sha256": "e24438bc519014eb5a5819cb907fd70a9092c531596b09702911d4b15233abc6"
+  },
+  {
+    "path": "research-history-course-books-2026-06-15/anthropic-research-history-course-book.md",
+    "sha256": "d5f72c7501ee353f8800d3e18aea5cb15cdfc904f8b93d5de9e01bdbb76a758e"
+  },
+  {
+    "path": "research-history-course-books-2026-06-15/anthropic-research-history-course-book.pdf",
+    "sha256": "c0fae18c13a55066f35a6b94a9f002be8100ecb138fb30173b3728f47d0ff160"
+  },
+  {
+    "path": "research-history-course-books-2026-06-15/brief.pdf",
+    "sha256": "c0fae18c13a55066f35a6b94a9f002be8100ecb138fb30173b3728f47d0ff160"
+  },
+  {
+    "path": "research-history-course-books-2026-06-15/images/anthropic/model-written-evals-figure-000.png",
+    "sha256": "3342a8a4d269422bb04203ec7f43899e2598fdd89dd0453e2bcc2455204ebfbd"
+  },
+  {
+    "path": "research-history-course-books-2026-06-15/images/openai/gpt3-scaling-figure-000.png",
+    "sha256": "0fc611cdffe2bc193f7cb1876b45baced2c8acaaee05a464e9f5ba8f38168b37"
+  },
+  {
+    "path": "research-history-course-books-2026-06-15/openai-research-history-course-book.md",
+    "sha256": "05074db3f743f4f38e59d25c22c3183744c84e6f3710ef922f610146b223e26d"
+  },
+  {
+    "path": "research-history-course-books-2026-06-15/openai-research-history-course-book.pdf",
+    "sha256": "0d543ea3ced3c1bcce68f96198e38428010c1f4d045b7b21a47be73dbfae4139"
+  },
+  {
+    "path": "sixmonth-agent-search-2025-12-12_2026-06-12/brief.md",
+    "sha256": "b00e2b7515a064881803fb4fe7f3b8ae48a536533e283a260c5fa21bd2bfb173"
+  },
+  {
+    "path": "sixmonth-agent-search-2025-12-12_2026-06-12/brief.pdf",
+    "sha256": "db5bf8f588797072098f6ac530c6ae16d22b1c07aee44dfe2fdcf31b6e2904b0"
+  },
+  {
+    "path": "sixmonth-agent-search-2025-12-12_2026-06-12/images/agenttrace-figure1-causal-graph-callout.png",
+    "sha256": "b4b9921ecfa20e1a11c97d9a922cb827b1bf0752fc9bc1a4bbc9bfa455f9e184"
+  },
+  {
+    "path": "sixmonth-agent-search-2025-12-12_2026-06-12/images/brtr-figure1-pipeline-callout.png",
+    "sha256": "6d7ff0e2390bae63099e83044c61e31b08e44dab1b03c5b1c1eed16e153c07bc"
+  },
+  {
+    "path": "sixmonth-agent-search-2025-12-12_2026-06-12/images/docseeker-figure2-alr-egra-callout.png",
+    "sha256": "e5cf762a4a867a0cbdc90fb324891316d2409a6de7dff327b8439cfdd6eac2af"
+  },
+  {
+    "path": "sixmonth-agent-search-2025-12-12_2026-06-12/images/embs-figure1-callout.png",
+    "sha256": "2e497a943e25f32685a8d11586a0c3e074440af183f2d8f1895e87d0f796edb6"
+  },
+  {
+    "path": "sixmonth-agent-search-2025-12-12_2026-06-12/images/opendev-figure1-framework-callout.png",
+    "sha256": "1ba92a6fbeabdbf63f98e695a8617cc93e6f6271c9f90951990fcb0c607e7984"
+  },
+  {
+    "path": "sixmonth-agent-search-2025-12-12_2026-06-12/images/ragsearch-figure1-control-callout.png",
+    "sha256": "0fb7b42921cde52ab06dea45390e863ca4f271314030afad7496aaa8fc7a0a5c"
+  },
+  {
+    "path": "sixmonth-agent-search-2025-12-12_2026-06-12/images/spd-rag-figure1-architecture-callout.png",
+    "sha256": "1e88b4fbab25d9fa5787c7829e8f34b4f9e5050a500a28b8f1e83e618a7ae4cb"
+  },
+  {
+    "path": "sixmonth-agent-search-2025-12-12_2026-06-12/images/spreadsheet-rl-figure1-results-callout.png",
+    "sha256": "2916a2a5a8f3f63eb56fb273eefd68004062fb75ca50a3f8f2821012836b363b"
+  },
+  {
+    "path": "tony-lian-papers-2026-07-06/brief.md",
+    "sha256": "c581e220bdb3dc403fc97c28b1091a9079a08ed097b6c1001333d0523461485f"
+  },
+  {
+    "path": "tony-lian-papers-2026-07-06/images/apr-figure1-cropped.png",
+    "sha256": "ec09f9d9ac5c02d44553f26edfbd7cfa6aaddf35beaafaa114aa3b95a47452e9"
+  },
+  {
+    "path": "tony-lian-papers-2026-07-06/images/citation-vs-relevance.png",
+    "sha256": "39c0423ccc68a2c5c688adcf237eba9605b1090849e90b3a6ae8c1f40ad5f1f7"
+  }
+]

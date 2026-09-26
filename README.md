@@ -36,4 +36,21 @@ ANTHROPIC_API_KEY=...
 GITHUB_TOKEN=... # optional
 ```
 
-Do not commit secrets, virtual environments, generated PDFs, or runtime databases.
+Do not commit secrets, virtual environments, working PDFs, or runtime databases. Final PDFs under `results/` are versioned.
+
+
+## Shared results and two-device workflow
+
+Completed reports are indexed in [results/README.md](results/README.md). Treat the
+Git remote as the shared source for code, `preferences.md`, and final results.
+Keep a separate clone on each Mac, outside folders managed by another sync service.
+
+Before working on either device, commit or stash local edits and run
+`git pull --ff-only`. After completing work, commit the intended files and run
+`git push`. If the histories diverge, reconcile the changes before pushing;
+do not force-push over work from the other device.
+
+Git transfers committed files only. Local `.env`, virtual environments, caches,
+runtime databases, and ignored working artifacts stay device-specific. Install
+the environment independently on each Mac. Promote completed reports and their
+required images into `results/` before deleting temporary research material.

@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="532" viewBox="0 0 1100 532">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<text x="30" y="28" font-family="Arial" font-size="20" font-weight="700" fill="#111827">CS294-288 reading distribution by topic</text>
+<text x="30" y="60" font-family="Arial" font-size="13" fill="#111827">Choose one of Membership inference and Trainin</text>
+<rect x="330" y="46" width="680" height="20" rx="3" fill="#2f6f63"/>
+<text x="1018" y="61" font-family="Arial" font-size="13" fill="#111827">12</text>
+<text x="30" y="94" font-family="Arial" font-size="13" fill="#111827">Pre-training data curation</text>
+<rect x="330" y="80" width="510" height="20" rx="3" fill="#8b5cf6"/>
+<text x="848" y="95" font-family="Arial" font-size="13" fill="#111827">9</text>
+<text x="30" y="128" font-family="Arial" font-size="13" fill="#111827">Creativity</text>
+<rect x="330" y="114" width="453" height="20" rx="3" fill="#d97706"/>
+<text x="791" y="129" font-family="Arial" font-size="13" fill="#111827">8</text>
+<text x="30" y="162" font-family="Arial" font-size="13" fill="#111827">Scaling laws</text>
+<rect x="330" y="148" width="396" height="20" rx="3" fill="#2563eb"/>
+<text x="734" y="163" font-family="Arial" font-size="13" fill="#111827">7</text>
+<text x="30" y="196" font-family="Arial" font-size="13" fill="#111827">Infinite compute scaling laws</text>
+<rect x="330" y="182" width="283" height="20" rx="3" fill="#be123c"/>
+<text x="621" y="197" font-family="Arial" font-size="13" fill="#111827">5</text>
+<text x="30" y="230" font-family="Arial" font-size="13" fill="#111827">Synthetic pre-training</text>
+<rect x="330" y="216" width="283" height="20" rx="3" fill="#64748b"/>
+<text x="621" y="231" font-family="Arial" font-size="13" fill="#111827">5</text>
+<text x="30" y="264" font-family="Arial" font-size="13" fill="#111827">Special topic A: Frontier Open-Source LLM</text>
+<rect x="330" y="250" width="283" height="20" rx="3" fill="#2f6f63"/>
+<text x="621" y="265" font-family="Arial" font-size="13" fill="#111827">5</text>
+<text x="30" y="298" font-family="Arial" font-size="13" fill="#111827">AI generated text detection</text>
+<rect x="330" y="284" width="283" height="20" rx="3" fill="#8b5cf6"/>
+<text x="621" y="299" font-family="Arial" font-size="13" fill="#111827">5</text>
+<text x="30" y="332" font-family="Arial" font-size="13" fill="#111827">Data copyright and permissivity</text>
+<rect x="330" y="318" width="226" height="20" rx="3" fill="#d97706"/>
+<text x="564" y="333" font-family="Arial" font-size="13" fill="#111827">4</text>
+<text x="30" y="366" font-family="Arial" font-size="13" fill="#111827">Special topic B: Next-Generation Architecture</text>
+<rect x="330" y="352" width="226" height="20" rx="3" fill="#2563eb"/>
+<text x="564" y="367" font-family="Arial" font-size="13" fill="#111827">4</text>
+<text x="30" y="400" font-family="Arial" font-size="13" fill="#111827">Model collapse</text>
+<rect x="330" y="386" width="170" height="20" rx="3" fill="#be123c"/>
+<text x="508" y="401" font-family="Arial" font-size="13" fill="#111827">3</text>
+<text x="30" y="434" font-family="Arial" font-size="13" fill="#111827">AI watermarking</text>
+<rect x="330" y="420" width="170" height="20" rx="3" fill="#64748b"/>
+<text x="508" y="435" font-family="Arial" font-size="13" fill="#111827">3</text>
+<text x="30" y="468" font-family="Arial" font-size="13" fill="#111827">Will we really run out of data?</text>
+<rect x="330" y="454" width="56" height="20" rx="3" fill="#2f6f63"/>
+<text x="394" y="469" font-family="Arial" font-size="13" fill="#111827">1</text>
+</svg>

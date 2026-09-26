@@ -1,5 +1,6 @@
 # Learned preferences (machine-maintained - edit freely)
 
+- 2026-09-06: Strongly prioritize prewarmed sandbox/container infrastructure for coding agents. Explain the before/after provisioning mechanism, lifecycle and cleanup, isolation and credential tradeoffs, and measured latency and cost impact; explicitly distinguish configured timeouts from benchmarks and unknown savings from measured results.
 - 2026-06-13: Prefer mechanism-first deep dives for learning artifacts: trace runtime loops, tool calls, context flow, and concrete implementation implications before broad takeaways.
 - 2026-06-13: Reward primary-source grounding from official docs, arXiv papers, GitHub diffs/releases, and exact citations; penalize unsupported summaries and reference drift.
 - 2026-06-13: For code and repo work, require file/path grounding, review-style findings when appropriate, and verification of links, citations, tests, or diffs before accepting a result.

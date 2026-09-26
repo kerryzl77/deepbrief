@@ -22,3 +22,6 @@ calibration/rubrics/
 calibration/pool/
 calibration/replays/
 calibration/candidates/
+
+# Final deliverables are versioned; working artifacts remain local.
+!results/**/*.pdf

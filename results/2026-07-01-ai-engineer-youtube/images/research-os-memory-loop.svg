@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="820" viewBox="0 0 1400 820">
+  <rect width="1400" height="820" fill="#f7f8f3"/>
+  <style>
+    .title{font-family:Inter,Arial,sans-serif;font-size:42px;font-weight:760;fill:#1b1f23;letter-spacing:0}
+    .sub{font-family:Inter,Arial,sans-serif;font-size:22px;fill:#3a4250;letter-spacing:0}
+    .box{fill:#ffffff;stroke:#27303f;stroke-width:3;rx:8}
+    .box2{fill:#eef5ff;stroke:#27303f;stroke-width:3;rx:8}
+    .box3{fill:#f3efe3;stroke:#27303f;stroke-width:3;rx:8}
+    .label{font-family:Inter,Arial,sans-serif;font-size:24px;font-weight:700;fill:#1b1f23;letter-spacing:0}
+    .small{font-family:Inter,Arial,sans-serif;font-size:18px;fill:#344054;letter-spacing:0}
+    .arrow{stroke:#27303f;stroke-width:4;fill:none;marker-end:url(#arrow)}
+  </style>
+  <defs><marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto"><path d="M2,2 L10,6 L2,10 Z" fill="#27303f"/></marker></defs>
+  <text x="70" y="76" class="title">AI Research OS: file-native memory loop</text>
+  <text x="70" y="114" class="sub">Derived from the selected AI Engineer transcript: raw sources, index, wiki derivatives, query trace.</text>
+
+  <rect x="70" y="180" width="260" height="150" class="box3"/>
+  <text x="100" y="226" class="label">Second brain</text>
+  <text x="100" y="262" class="small">Obsidian, Readwise,</text>
+  <text x="100" y="290" class="small">Notion, Drive, GitHub,</text>
+  <text x="100" y="318" class="small">YouTube, custom URLs</text>
+
+  <rect x="430" y="180" width="280" height="150" class="box2"/>
+  <text x="460" y="226" class="label">Deep research loop</text>
+  <text x="460" y="262" class="small">Seed topic -> questions</text>
+  <text x="460" y="290" class="small">multi-source retrieval</text>
+  <text x="460" y="318" class="small">ranking + full scrape</text>
+
+  <rect x="810" y="160" width="240" height="110" class="box"/>
+  <text x="840" y="205" class="label">raw/</text>
+  <text x="840" y="238" class="small">immutable source files</text>
+  <rect x="810" y="310" width="240" height="110" class="box"/>
+  <text x="840" y="355" class="label">index.yaml</text>
+  <text x="840" y="388" class="small">catalog + summaries</text>
+  <rect x="810" y="460" width="240" height="110" class="box"/>
+  <text x="840" y="505" class="label">wiki/</text>
+  <text x="840" y="538" class="small">concepts, entities,</text>
+  <text x="840" y="564" class="small">comparisons, notes</text>
+
+  <rect x="1140" y="235" width="200" height="250" class="box2"/>
+  <text x="1170" y="282" class="label">Agent query</text>
+  <text x="1170" y="320" class="small">1. read index</text>
+  <text x="1170" y="350" class="small">2. inspect wiki</text>
+  <text x="1170" y="380" class="small">3. open raw only</text>
+  <text x="1170" y="410" class="small">when needed</text>
+  <text x="1170" y="452" class="small">questions update</text>
+  <text x="1170" y="480" class="small">the wiki trace</text>
+
+  <path d="M330 255 H430" class="arrow"/>
+  <path d="M710 255 H785" class="arrow"/>
+  <path d="M930 270 V310" class="arrow"/>
+  <path d="M930 420 V460" class="arrow"/>
+  <path d="M1050 365 H1140" class="arrow"/>
+  <path d="M1140 455 C1030 650 625 690 470 560" class="arrow"/>
+  <text x="565" y="690" class="small">new questions, notes, comparisons, and source updates keep the project memory alive</text>
+</svg>
