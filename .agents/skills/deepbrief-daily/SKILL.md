@@ -34,6 +34,7 @@ These guardrails override any softer wording elsewhere in this skill.
 - A scripted report under `reviews/read-workers/` is useful audit material, but it does not count as a source-specific subagent report when the user asked for subagents or one-agent-per-source work.
 - If app concurrency is capped, spawn the source-specific subagents in waves until the requested count is met. Record wave size, completed agent ids, timeouts, and failures in `reviews/fanout-report.md`.
 - If the requested number of subagents cannot be spawned, stop before synthesis or rendering and ask the user whether to approve a degraded run. Do not silently satisfy the gate with local scripts.
+- After the selected source set is known and before synthesis or rendering, explicitly count actual source-specific reports under `reviews/subagents/read-*.md` against the selected item ids. If requested or high-recall source-specific fanout has zero actual reports, or fewer reports than the selected-source gate requires, stop and ask for degraded-run approval. Top-level `reviews/*.md` notes and `reviews/read-workers/*.md` files are auxiliary evidence only and must not be used to clear this gate.
 
 ## Output Contract Precedence
 
@@ -80,9 +81,10 @@ These files are inputs only. Do not write to `profile.md` or `preferences.md`; t
 8. Pick one deep dive and 4-6 skim items only after the research gates pass.
 9. For each selected item, download or preserve a local raw artifact and write a substantive per-source read report under `reviews/`. The deep-dive report must be materially deeper than skim reports and must show full-document or full-diff inspection, not only keyword hits.
 10. Write `verification/evidence-matrix.md` or `verification/evidence-matrix.jsonl` tying claims to local artifacts and exact sections, pages, or lines.
-11. Write a complete, ready-to-read `brief.md` following `references/brief-contract.md` and the Hard Composition Guardrails above: author each section from its read reports and lane syntheses (drafting deep dives to `drafts/` first on large runs), use source-aware mechanism traces, inline evidence, and real code/config snippets only when they come from inspected artifacts. Never emit final prose from a script template.
-12. Run `python scripts/render_brief.py --input <brief.md> --out <artifact-dir>`.
-13. Fix research, citation, layout, or quality-gate failures until the PDF is ready to read.
+11. Before synthesis, reconcile the selected-source list with `reviews/subagents/read-*.md`, `reviews/fanout-report.md`, and any degraded-run approval. If source-specific subagents were requested or required and the selected-source gate is not met by actual subagent reports, block synthesis/rendering instead of filling the gap with parent-written notes or scripted read-workers.
+12. Write a complete, ready-to-read `brief.md` following `references/brief-contract.md` and the Hard Composition Guardrails above: author each section from its read reports and lane syntheses (drafting deep dives to `drafts/` first on large runs), use source-aware mechanism traces, inline evidence, and real code/config snippets only when they come from inspected artifacts. Never emit final prose from a script template.
+13. Run `python scripts/render_brief.py --input <brief.md> --out <artifact-dir>`.
+14. Fix research, citation, layout, or quality-gate failures until the PDF is ready to read.
 
 ## Research Gates
 
